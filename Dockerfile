@@ -13,8 +13,8 @@ RUN apk add --no-cache ca-certificates tzdata sqlite
 
 WORKDIR /src
 
-COPY go.mod go.sum ./
-RUN go mod download
+COPY go.mod go.sum* ./
+RUN go mod download || go mod tidy
 
 COPY . .
 
