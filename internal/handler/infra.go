@@ -53,7 +53,7 @@ func (h *InfraHandler) Infra(w http.ResponseWriter, r *http.Request) {
 		metrics := h.cache.metrics
 		h.cache.mu.RUnlock()
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(metrics)
+		_ = json.NewEncoder(w).Encode(metrics)
 		return
 	}
 	h.cache.mu.RUnlock()
@@ -66,7 +66,7 @@ func (h *InfraHandler) Infra(w http.ResponseWriter, r *http.Request) {
 	h.cache.mu.Unlock()
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(metrics)
+	_ = json.NewEncoder(w).Encode(metrics)
 }
 
 // InfraStream sends infrastructure metrics as Server-Sent Events every 5 seconds.
@@ -88,7 +88,7 @@ func (h *InfraHandler) InfraStream(w http.ResponseWriter, r *http.Request) {
 	// Send an initial event immediately
 	metrics := h.collectMetrics()
 	data, _ := json.Marshal(metrics)
-	fmt.Fprintf(w, "event: metrics\ndata: %s\n\n", data)
+	_, _ = fmt.Fprintf(w, "event: metrics\ndata: %s\n\n", data)
 	flusher.Flush()
 
 	ticker := time.NewTicker(5 * time.Second)
