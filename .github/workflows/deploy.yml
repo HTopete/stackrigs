@@ -1,9 +1,10 @@
 name: Deploy StackRigs
 
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+  # Disabled auto-deploy until infra is ready (Pi + Cloudflare secrets)
+  # push:
+  #   branches: [main]
+  workflow_dispatch:  # Manual trigger only for now
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -29,12 +30,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         working-directory: frontend
-        run: npm ci
+        run: npm install
 
       - name: Build Astro
         working-directory: frontend
