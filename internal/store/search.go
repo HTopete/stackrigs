@@ -23,7 +23,7 @@ func (s *SearchStore) RebuildIndex() error {
 	if err != nil {
 		return fmt.Errorf("beginning rebuild transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	// Clear existing index
 	if _, err := tx.Exec("DELETE FROM search_index"); err != nil {

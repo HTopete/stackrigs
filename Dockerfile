@@ -13,10 +13,9 @@ RUN apk add --no-cache ca-certificates tzdata sqlite
 
 WORKDIR /src
 
-COPY go.mod go.sum* ./
-RUN go mod tidy && go mod download
-
 COPY . .
+
+RUN go mod tidy && go mod download
 
 # CGO disabled: uses a pure-Go SQLite driver (modernc.org/sqlite or similar).
 # TARGETARCH is injected by Docker buildx automatically.
