@@ -33,7 +33,7 @@ func Load() *Config {
 	cfg := &Config{
 		Port:           getEnv("PORT", "8080"),
 		DatabasePath:   getEnv("DATABASE_PATH", "./stackrigs.db"),
-		AllowedOrigins: parseOrigins(getEnv("ALLOWED_ORIGINS", "https://stackrigs.com,http://localhost:3000,http://localhost:5173")),
+		AllowedOrigins: parseOrigins(getEnv("ALLOWED_ORIGINS", "https://stackrigs.com,https://api.stackrigs.com,http://localhost:3000,http://localhost:5173")),
 		Env:            getEnv("ENV", "dev"),
 
 		WebAuthnDisplayName: getEnv("WEBAUTHN_DISPLAY_NAME", "StackRigs"),

@@ -154,7 +154,7 @@ cat <<'REMINDER'
       1. cloudflared tunnel create stackrigs-vps
       2. Update TUNNEL_TOKEN in .env on the VPS
       3. In Cloudflare Zero Trust dashboard, configure:
-           - stackrigs.com -> http://stackrigs:8080
+           - api.stackrigs.com -> http://stackrigs:8080
 
     Option B: Reuse the existing tunnel
       1. Copy the same TUNNEL_TOKEN (already done)

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
 import type { FunctionComponent } from 'preact';
+import { API_BASE } from '../lib/api';
 
 interface SearchResultItem {
   type: 'builder' | 'build' | 'technology';
@@ -78,7 +79,7 @@ const SearchIsland: FunctionComponent<Props> = ({ locale, placeholder, noResults
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`);
+      const res = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(trimmed)}`);
       if (res.ok) {
         const data: BackendSearchResult = await res.json();
         const items = mapBackendToItems(data, locale);

@@ -73,7 +73,7 @@ jobs:
           npm install
           npm run build
         env:
-          PUBLIC_API_URL: https://stackrigs.com
+          PUBLIC_API_URL: https://api.stackrigs.com
 
   # ---------------------------------------------------------------------------
   # Job 2: Build multi-arch Docker image, scan, push to GHCR
@@ -206,7 +206,7 @@ jobs:
         working-directory: frontend
         run: npm run build
         env:
-          PUBLIC_API_URL: https://stackrigs.com
+          PUBLIC_API_URL: https://api.stackrigs.com
 
       - name: Ensure Pages project exists
         uses: cloudflare/wrangler-action@v3

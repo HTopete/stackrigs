@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import type { FunctionComponent } from 'preact';
+import { API_BASE } from '../lib/api';
 
 interface InfraMetrics {
   uptime: string;
@@ -42,7 +43,7 @@ const InfraLive: FunctionComponent<Props> = ({ labels }) => {
     }
 
     try {
-      const es = new EventSource('/api/infra/stream');
+      const es = new EventSource(`${API_BASE}/api/infra/stream`);
       eventSourceRef.current = es;
 
       es.onopen = () => {
@@ -72,7 +73,7 @@ const InfraLive: FunctionComponent<Props> = ({ labels }) => {
 
   const fallbackFetch = async () => {
     try {
-      const res = await fetch('/api/infra');
+      const res = await fetch(`${API_BASE}/api/infra`);
       if (res.ok) {
         const data: InfraMetrics = await res.json();
         setMetrics(data);
