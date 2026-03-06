@@ -1,6 +1,7 @@
 ---
 import { ClientRouter } from 'astro:transitions';
 import { detectLocaleFromPath } from '../i18n/index';
+import '../styles/global.css';
 
 interface Props {
   title: string;
@@ -54,11 +55,6 @@ const ogImageURL = ogImage || `${Astro.url.origin}/og-default.png`;
     href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Serif+Display&display=swap"
     rel="stylesheet"
   />
-
-  <!-- Styles -->
-  <style>
-    @import '../styles/global.css';
-  </style>
 
   <!-- View Transitions -->
   <ClientRouter />
