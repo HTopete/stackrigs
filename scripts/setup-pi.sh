@@ -223,13 +223,29 @@ fi
 ###############################################################################
 log "Step 6/8: Firewall"
 
+# Detect Pi-hole — if running, allow DNS + admin web interface
+PIHOLE_DETECTED=false
+if command -v pihole &>/dev/null || systemctl is-active --quiet pihole-FTL 2>/dev/null; then
+  PIHOLE_DETECTED=true
+  log "Pi-hole detected — will keep DNS (53) and admin (80) open for LAN"
+fi
+
 ufw --force reset > /dev/null
 ufw default deny incoming
 ufw default allow outgoing
 ufw allow ssh
+
+if [[ "$PIHOLE_DETECTED" == "true" ]]; then
+  # Allow DNS from local network only
+  LAN_SUBNET="$(ip -4 route show default | awk '{print $3}' | sed 's/\.[0-9]*$/.0\/24/')"
+  ufw allow from "$LAN_SUBNET" to any port 53
+  ufw allow from "$LAN_SUBNET" to any port 80
+  log "Allowed DNS (53) and Pi-hole admin (80) from $LAN_SUBNET"
+fi
+
 ufw --force enable
 
-log "Firewall: SSH only. Port 8080 NOT exposed (tunnel handles inbound)"
+log "Firewall configured. Port 8080 NOT exposed (tunnel handles inbound)"
 
 ###############################################################################
 # Step 7: GHCR auth + pull + start
