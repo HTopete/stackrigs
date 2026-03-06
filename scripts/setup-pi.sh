@@ -94,24 +94,19 @@ if [[ "$REAL_USER" != "root" ]]; then
 fi
 
 ###############################################################################
-# Step 3: cloudflared (Cloudflare apt repo for arm64)
-# Ref: https://pkg.cloudflare.com/
+# Step 3: cloudflared (direct .deb — apt repo doesn't support Trixie yet)
+# Ref: https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/downloads/
 ###############################################################################
 log "Step 3/8: cloudflared"
 
 if command -v cloudflared &>/dev/null; then
   log "Already installed: $(cloudflared --version)"
 else
-  mkdir -p /usr/share/keyrings
-  curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg \
-    -o /usr/share/keyrings/cloudflare-main.gpg
-
-  echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] \
-https://pkg.cloudflare.com/cloudflared $(. /etc/os-release && echo "$VERSION_CODENAME") main" \
-    > /etc/apt/sources.list.d/cloudflared.list
-
-  apt-get update -y
-  apt-get install -y cloudflared
+  CLOUDFLARED_DEB="/tmp/cloudflared-linux-arm64.deb"
+  curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64.deb \
+    -o "$CLOUDFLARED_DEB"
+  dpkg -i "$CLOUDFLARED_DEB"
+  rm -f "$CLOUDFLARED_DEB"
   log "Installed: $(cloudflared --version)"
 fi
 
