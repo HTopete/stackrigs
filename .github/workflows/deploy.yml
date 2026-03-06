@@ -1,9 +1,10 @@
 name: Deploy StackRigs
 
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+  # Disabled auto-deploy until infra is ready (Pi + Cloudflare secrets)
+  # push:
+  #   branches: [main]
+  workflow_dispatch:  # Manual trigger only for now
 
 concurrency:
   group: deploy-${{ github.ref }}
