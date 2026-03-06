@@ -192,3 +192,37 @@ See `.env.example` for the full list. Critical ones:
 | `DEPLOY_USER` | SSH user on server | When backend ready |
 | `DEPLOY_SSH_KEY` | SSH private key | When backend ready |
 | `DEPLOY_SSH_PORT` | SSH port (default: 22) | Optional |
+
+## Next Steps (Pending)
+
+### Infrastructure (Pi 5 / VPS)
+- [ ] Install Docker + Docker Compose on Pi 5
+- [ ] Set up Cloudflare Tunnel (`cloudflared`) to expose Go API on stackrigs.com
+- [ ] Configure DNS in Cloudflare: stackrigs.com → Tunnel (API), Pages (frontend)
+- [ ] Add GitHub secrets: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`
+- [ ] Create `/opt/stackrigs` deploy directory with `docker-compose.yml` and `.env`
+- [ ] First deploy: pull image from GHCR, run `docker compose up -d`
+- [ ] Verify health check at `http://localhost:8080/health`
+
+### Frontend Polish
+- [ ] Verify Cloudflare Pages project was auto-created (check deploy logs)
+- [ ] Connect custom domain stackrigs.com to Cloudflare Pages
+- [ ] Test all pages render correctly (index, explore, search, infra, about)
+- [ ] Test Spanish routes (/es/*)
+- [ ] Review and polish CSS / Editorial Zen design in browser
+
+### Backend Validation
+- [ ] Install Go locally or use Docker to run `go mod tidy` and commit a real `go.sum`
+- [ ] Commit `frontend/package-lock.json` for deterministic CI builds (`npm ci`)
+- [ ] Run the server locally and test all API endpoints
+- [ ] Test Passkey registration/login flow
+- [ ] Test GitHub OAuth flow (needs GitHub OAuth App created)
+- [ ] Verify SQLite migrations run correctly on first startup
+
+### Production Hardening
+- [ ] Create GitHub OAuth App (Settings → Developer → OAuth Apps) for stackrigs.com
+- [ ] Generate `SESSION_SECRET` (32-byte random)
+- [ ] Set up R2 bucket for backups + configure `scripts/backup.sh`
+- [ ] Configure cron for hourly backups (`crontab.example`)
+- [ ] Set up monitoring/alerts (uptime check on /health)
+- [ ] Review Trivy scan results and fix any vulnerabilities

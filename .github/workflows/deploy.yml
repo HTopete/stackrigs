@@ -291,9 +291,8 @@ jobs:
             echo "[deploy] Pulling image: $IMAGE"
             docker pull "$IMAGE"
 
-            export STACKRIGS_IMAGE="$IMAGE"
             echo "[deploy] Restarting services..."
-            docker compose up -d --pull always
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --pull always
 
             # --- Health check with retries ---
             echo "[deploy] Running health checks..."
@@ -311,12 +310,15 @@ jobs:
             # --- Rollback on failure ---
             if [ "$HEALTHY" = "false" ]; then
               echo "[deploy] HEALTH CHECK FAILED — initiating rollback"
-              docker compose logs --tail 50
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail 50
 
               if [ -n "$ROLLBACK_TAG" ]; then
                 echo "[deploy] Rolling back to previous image..."
-                export STACKRIGS_IMAGE="${REGISTRY}/${IMAGE_NAME}:${ROLLBACK_TAG}"
-                docker compose up -d
+                # Temporarily override image to rollback tag
+                sed -i "s|image:.*|image: ${REGISTRY}/${IMAGE_NAME}:${ROLLBACK_TAG}|" docker-compose.prod.yml
+                docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+                # Restore latest tag
+                sed -i "s|image:.*|image: ${REGISTRY}/${IMAGE_NAME}:latest|" docker-compose.prod.yml
                 sleep 10
 
                 if curl -sf http://localhost:8080/health > /dev/null 2>&1; then
