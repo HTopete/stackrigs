@@ -136,8 +136,10 @@ jobs:
 
       - name: Trivy vulnerability scan
         uses: aquasecurity/trivy-action@0.33.0
+        env:
+          TRIVY_PLATFORM: linux/amd64
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build-push.outputs.digest }}
           format: sarif
           output: trivy-results.sarif
           severity: CRITICAL,HIGH
@@ -152,8 +154,10 @@ jobs:
 
       - name: Trivy SBOM generation
         uses: aquasecurity/trivy-action@0.33.0
+        env:
+          TRIVY_PLATFORM: linux/amd64
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build-push.outputs.digest }}
           format: cyclonedx
           output: sbom.cdx.json
           scan-type: image
@@ -167,8 +171,10 @@ jobs:
 
       - name: Fail on critical vulnerabilities
         uses: aquasecurity/trivy-action@0.33.0
+        env:
+          TRIVY_PLATFORM: linux/amd64
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build-push.outputs.digest }}
           format: table
           severity: CRITICAL
           exit-code: "1"
@@ -201,6 +207,14 @@ jobs:
         run: npm run build
         env:
           PUBLIC_API_URL: https://stackrigs.com
+
+      - name: Ensure Pages project exists
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages project create ${{ vars.CF_PAGES_PROJECT || 'stackrigs' }} --production-branch=main
+        continue-on-error: true
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
