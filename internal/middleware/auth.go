@@ -44,7 +44,7 @@ func (m *AuthMiddleware) RequireAuth(next http.Handler) http.Handler {
 		if err != nil || builder == nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(`{"error":"authentication required","code":401}`))
+			_, _ = w.Write([]byte(`{"error":"authentication required","code":401}`))
 			return
 		}
 

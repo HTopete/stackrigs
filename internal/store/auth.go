@@ -204,7 +204,7 @@ func (s *AuthStore) FindOrCreateBuilderByGitHub(githubID int64, username, avatar
 	_ = s.db.QueryRow("SELECT COUNT(*) FROM builders WHERE handle = ?", handle).Scan(&existing)
 	if existing > 0 {
 		suffix := make([]byte, 3)
-		rand.Read(suffix)
+		_, _ = rand.Read(suffix)
 		handle = fmt.Sprintf("gh-%s-%s", username, hex.EncodeToString(suffix))
 	}
 

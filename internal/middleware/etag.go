@@ -53,7 +53,7 @@ func ETag(next http.Handler) http.Handler {
 		// Only generate ETags for successful responses
 		if ew.statusCode < 200 || ew.statusCode >= 300 {
 			w.WriteHeader(ew.statusCode)
-			w.Write(body)
+			_, _ = w.Write(body)
 			return
 		}
 
@@ -78,6 +78,6 @@ func ETag(next http.Handler) http.Handler {
 		// Write ETag header and the full response
 		w.Header().Set("ETag", etag)
 		w.WriteHeader(ew.statusCode)
-		w.Write(body)
+		_, _ = w.Write(body)
 	})
 }
