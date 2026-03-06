@@ -242,112 +242,13 @@ jobs:
           exit 0
 
   # ---------------------------------------------------------------------------
-  # Job 4: Deploy Backend to Pi/VPS via SSH
+  # Job 4: Deploy Backend — MANUAL (Pi is on private LAN, no SSH from internet)
   # ---------------------------------------------------------------------------
-  deploy-backend:
-    name: Deploy Backend (Pi/VPS)
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: [lint-and-test, build-and-push-docker]
-    environment: production
-    permissions:
-      contents: read
-      packages: read
-
-    steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
-        env:
-          REGISTRY: ${{ env.REGISTRY }}
-          IMAGE_NAME: ${{ env.IMAGE_NAME }}
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          port: ${{ secrets.DEPLOY_SSH_PORT || 22 }}
-          envs: REGISTRY,IMAGE_NAME
-          script: |
-            set -euo pipefail
-
-            DEPLOY_DIR="${{ vars.DEPLOY_PATH || '/opt/stackrigs' }}"
-            IMAGE="${REGISTRY}/${IMAGE_NAME}:latest"
-            ROLLBACK_TAG=""
-
-            cd "$DEPLOY_DIR"
-
-            # --- Capture current image for rollback ---
-            CURRENT_IMAGE=$(docker inspect --format='{{.Image}}' stackrigs 2>/dev/null || echo "")
-            if [ -n "$CURRENT_IMAGE" ]; then
-              ROLLBACK_TAG="rollback-$(date +%s)"
-              docker tag "$CURRENT_IMAGE" "${REGISTRY}/${IMAGE_NAME}:${ROLLBACK_TAG}" 2>/dev/null || true
-              echo "[deploy] Rollback image tagged: ${ROLLBACK_TAG}"
-            fi
-
-            # --- Pre-deploy backup ---
-            echo "[deploy] Running pre-deploy backup..."
-            ./scripts/backup.sh || echo "WARNING: backup failed, continuing deploy"
-
-            # --- Pull and restart ---
-            echo "[deploy] Pulling image: $IMAGE"
-            docker pull "$IMAGE"
-
-            echo "[deploy] Restarting services..."
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --pull always
-
-            # --- Health check with retries ---
-            echo "[deploy] Running health checks..."
-            HEALTHY=false
-            for i in $(seq 1 15); do
-              if curl -sf http://localhost:8080/health > /dev/null 2>&1; then
-                echo "[deploy] Health check passed (attempt $i/15)"
-                HEALTHY=true
-                break
-              fi
-              echo "[deploy] Health check attempt $i/15 failed, retrying in 3s..."
-              sleep 3
-            done
-
-            # --- Rollback on failure ---
-            if [ "$HEALTHY" = "false" ]; then
-              echo "[deploy] HEALTH CHECK FAILED — initiating rollback"
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail 50
-
-              if [ -n "$ROLLBACK_TAG" ]; then
-                echo "[deploy] Rolling back to previous image..."
-                # Temporarily override image to rollback tag
-                sed -i "s|image:.*|image: ${REGISTRY}/${IMAGE_NAME}:${ROLLBACK_TAG}|" docker-compose.prod.yml
-                docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-                # Restore latest tag
-                sed -i "s|image:.*|image: ${REGISTRY}/${IMAGE_NAME}:latest|" docker-compose.prod.yml
-                sleep 10
-
-                if curl -sf http://localhost:8080/health > /dev/null 2>&1; then
-                  echo "[deploy] Rollback successful — service restored"
-                else
-                  echo "[deploy] CRITICAL: Rollback also failed. Manual intervention required."
-                fi
-              else
-                echo "[deploy] No previous image available for rollback."
-              fi
-
-              exit 1
-            fi
-
-            echo "[deploy] Deployment successful"
-
-      - name: Cleanup old images
-        if: success()
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          port: ${{ secrets.DEPLOY_SSH_PORT || 22 }}
-          script: |
-            docker image prune -f
-            # Keep only the 3 most recent stackrigs images
-            docker images "ghcr.io/*/stackrigs" --format "{{.ID}} {{.CreatedAt}}" \
-              | sort -k2 -r \
-              | tail -n +4 \
-              | awk '{print $1}' \
-              | xargs -r docker rmi 2>/dev/null || true
+  # Backend deploy is done manually from the Pi:
+  #   ssh rub3n@192.168.0.210
+  #   cd /opt/stackrigs
+  #   docker pull ghcr.io/htopete/stackrigs:latest
+  #   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+  #
+  # The image is built and pushed to GHCR by the build-and-push-docker job.
+  # Pull it from the Pi whenever you want to deploy.
