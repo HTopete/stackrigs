@@ -103,8 +103,8 @@ if command -v cloudflared &>/dev/null; then
   log "Already installed: $(cloudflared --version)"
 else
   CLOUDFLARED_DEB="/tmp/cloudflared-linux-arm64.deb"
-  curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64.deb \
-    -o "$CLOUDFLARED_DEB"
+  # wget instead of curl — Pi-hole can block GitHub redirects via curl
+  wget -qO "$CLOUDFLARED_DEB" https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64.deb
   dpkg -i "$CLOUDFLARED_DEB"
   rm -f "$CLOUDFLARED_DEB"
   log "Installed: $(cloudflared --version)"
@@ -232,7 +232,7 @@ ufw allow ssh
 
 if [[ "$PIHOLE_DETECTED" == "true" ]]; then
   # Allow DNS from local network only
-  LAN_SUBNET="$(ip -4 route show default | awk '{print $3}' | sed 's/\.[0-9]*$/.0\/24/')"
+  LAN_SUBNET="$(ip -4 route show default | head -1 | awk '{print $3}' | sed 's/\.[0-9]*$/.0\/24/')"
   ufw allow from "$LAN_SUBNET" to any port 53
   ufw allow from "$LAN_SUBNET" to any port 80
   log "Allowed DNS (53) and Pi-hole admin (80) from $LAN_SUBNET"
