@@ -47,15 +47,17 @@ const t = useTranslations(locale);
 </Page>
 
 <script>
+  const API_BASE = import.meta.env.PUBLIC_API_URL || '';
+
   document.addEventListener('astro:page-load', () => {
     const passkeyBtn = document.getElementById('passkey-signin');
     if (!passkeyBtn) return;
 
     passkeyBtn.addEventListener('click', async () => {
       try {
-        const beginRes = await fetch('/api/auth/webauthn/login/begin', {
+        const beginRes = await fetch(`${API_BASE}/api/auth/webauthn/login/begin`, {
           method: 'POST',
-          credentials: 'same-origin',
+          credentials: 'include',
         });
 
         if (!beginRes.ok) {
@@ -78,10 +80,10 @@ const t = useTranslations(locale);
 
         if (!credential) return;
 
-        const finishRes = await fetch('/api/auth/webauthn/login/finish', {
+        const finishRes = await fetch(`${API_BASE}/api/auth/webauthn/login/finish`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          credentials: 'same-origin',
+          credentials: 'include',
           body: JSON.stringify(credential),
         });
 

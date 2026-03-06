@@ -10,7 +10,7 @@ const { handle, buildId } = Astro.props;
 const locale = detectLocaleFromPath(Astro.url.pathname);
 const t = useTranslations(locale);
 
-const badgeUrl = `https://stackrigs.com/badge/${handle}.svg`;
+const badgeUrl = `https://api.stackrigs.com/badge/${handle}.svg`;
 const embedCode = `<img src="${badgeUrl}" alt="StackRigs build badge for ${handle}" />`;
 ---
 

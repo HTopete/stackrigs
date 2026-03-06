@@ -14,7 +14,7 @@ info:
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: https://stackrigs.com
+  - url: https://api.stackrigs.com
     description: Production
   - url: http://localhost:8080
     description: Local development

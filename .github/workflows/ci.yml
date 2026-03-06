@@ -74,7 +74,7 @@ jobs:
         working-directory: frontend
         run: npm run build
         env:
-          PUBLIC_API_URL: https://stackrigs.com
+          PUBLIC_API_URL: https://api.stackrigs.com
 
   # ---------------------------------------------------------------------------
   # Dockerfile: verify it builds (single arch, no push)

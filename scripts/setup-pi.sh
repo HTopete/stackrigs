@@ -133,9 +133,8 @@ cat <<'TUNNEL_GUIDE'
   3. Name: stackrigs
   4. Skip the install step (Docker handles it)
   5. Add public hostname:
-       Subdomain: (leave blank for apex)
+       Subdomain: api
        Domain:    stackrigs.com
-       Path:      api/*
        Service:   HTTP://stackrigs:8080
   6. Copy the TUNNEL_TOKEN from the install command
      (it's the long string after --token)
@@ -342,7 +341,7 @@ cat <<SUMMARY
     DEPLOY_SSH_KEY  (paste your SSH private key)
 
   Verify tunnel:
-    curl -sf https://stackrigs.com/health && echo "OK"
+    curl -sf https://api.stackrigs.com/health && echo "OK"
 
 ============================================================
 
