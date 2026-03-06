@@ -1,0 +1,153 @@
+---
+import Page from '../../layouts/Page.astro';
+import BuildCard from '../../components/BuildCard.astro';
+import FreshnessDot from '../../components/FreshnessDot.astro';
+import SetupGallery from '../../components/SetupGallery.astro';
+import { detectLocaleFromPath, useTranslations } from '../../i18n/index';
+
+const { handle } = Astro.params;
+const locale = detectLocaleFromPath(Astro.url.pathname);
+const t = useTranslations(locale);
+
+// Mock data — replace with API call using `handle`
+const builder = {
+  handle: handle || 'unknown',
+  name: 'Ana Rodriguez',
+  bio: 'Full-stack developer building tools for small teams. Based in Mexico City.',
+  avatar: '/avatars/placeholder.png',
+  memberSince: '2025-06-15',
+  lastActive: '2026-03-01',
+  links: {
+    github: 'https://github.com/anarodriguez',
+    twitter: 'https://x.com/anarodriguez',
+    website: 'https://ana.dev',
+  },
+  builds: [
+    {
+      id: '1',
+      name: 'StackRigs',
+      tagline: 'An open index of what developers build',
+      status: 'building' as const,
+      stack: [
+        { slug: 'go', displayName: 'Go' },
+        { slug: 'astro', displayName: 'Astro' },
+        { slug: 'sqlite', displayName: 'SQLite' },
+      ],
+      whatWorks: 'SQLite on a Pi 5 handles 500+ req/s.',
+      lastUpdated: '2026-03-01',
+    },
+    {
+      id: '2',
+      name: 'DataForge',
+      tagline: 'ETL pipelines for small teams',
+      status: 'launched' as const,
+      stack: [
+        { slug: 'python', displayName: 'Python' },
+        { slug: 'postgresql', displayName: 'PostgreSQL' },
+      ],
+      whatWorks: 'PostgreSQL logical replication is rock solid.',
+      lastUpdated: '2026-02-15',
+    },
+  ],
+  setupImages: [
+    {
+      src: '/setup/placeholder-1.jpg',
+      alt: 'Desk setup with dual monitors',
+      caption: 'Daily driver setup',
+    },
+    {
+      src: '/setup/placeholder-2.jpg',
+      alt: 'Raspberry Pi cluster',
+      caption: 'Home lab',
+    },
+  ],
+};
+
+export function getStaticPaths() {
+  return [
+    { params: { handle: 'anarodriguez' } },
+    { params: { handle: 'demo' } },
+  ];
+}
+---
+
+<Page
+  title={`@${builder.handle} — StackRigs`}
+  description={`${builder.name}'s build log on StackRigs. ${builder.bio}`}
+  ogType="profile"
+>
+  <section class="page-section">
+    <!-- Builder Header -->
+    <header class="builder-header">
+      <img
+        src={builder.avatar}
+        alt={`${builder.name}'s avatar`}
+        class="builder-avatar"
+        loading="lazy"
+      />
+      <div>
+        <h1>{builder.name}</h1>
+        <p class="builder-handle">@{builder.handle}</p>
+        {builder.bio && <p class="builder-bio">{builder.bio}</p>}
+
+        <div class="builder-meta">
+          <FreshnessDot lastUpdated={builder.lastActive} />
+          <span class="text-muted font-mono" style="font-size: var(--font-size-xs);">
+            {t('builder.memberSince')} {new Date(builder.memberSince).toLocaleDateString(locale, { year: 'numeric', month: 'short' })}
+          </span>
+        </div>
+
+        <nav class="builder-links" aria-label="External links">
+          {builder.links.github && (
+            <a href={builder.links.github} class="builder-link" target="_blank" rel="noopener noreferrer">
+              GitHub
+            </a>
+          )}
+          {builder.links.twitter && (
+            <a href={builder.links.twitter} class="builder-link" target="_blank" rel="noopener noreferrer">
+              X
+            </a>
+          )}
+          {builder.links.website && (
+            <a href={builder.links.website} class="builder-link" target="_blank" rel="noopener noreferrer">
+              Website
+            </a>
+          )}
+        </nav>
+      </div>
+    </header>
+
+    <!-- Builds -->
+    <section aria-labelledby="builder-builds-title">
+      <h2 id="builder-builds-title">{t('builder.builds')}</h2>
+      <div class="grid-cards" style="margin-top: var(--space-6);">
+        {builder.builds.map(build => (
+          <BuildCard build={build} />
+        ))}
+      </div>
+    </section>
+
+    <!-- Setup Gallery -->
+    {builder.setupImages && builder.setupImages.length > 0 && (
+      <section style="margin-top: var(--space-10);">
+        <h2>Setup</h2>
+        <SetupGallery images={builder.setupImages} />
+      </section>
+    )}
+  </section>
+</Page>
+
+<style>
+  .builder-bio {
+    color: var(--color-text-secondary);
+    margin-top: var(--space-2);
+    font-size: var(--font-size-md);
+  }
+
+  .builder-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-top: var(--space-3);
+  }
+</style>

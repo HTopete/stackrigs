@@ -1,0 +1,194 @@
+---
+import Page from '../../layouts/Page.astro';
+import BuildCard from '../../components/BuildCard.astro';
+import StackTag from '../../components/StackTag.astro';
+import { detectLocaleFromPath, useTranslations, localePath } from '../../i18n/index';
+
+const { slug } = Astro.params;
+const locale = detectLocaleFromPath(Astro.url.pathname);
+const t = useTranslations(locale);
+
+// Mock data — replace with API call
+const technology = {
+  slug: slug || 'unknown',
+  displayName: slug ? slug.charAt(0).toUpperCase() + slug.slice(1) : 'Unknown',
+  category: 'Language',
+  buildCount: 65,
+  whatWorks: [
+    'Goroutines handle concurrent requests with minimal memory overhead.',
+    'Single binary deployment eliminates dependency management headaches.',
+    'Standard library is comprehensive enough for most web services.',
+    'Compile times are fast enough to not disrupt flow.',
+  ],
+  whatBroke: [
+    'Error handling verbosity gets tiring in large codebases.',
+    'Lack of generics (before 1.18) led to code duplication.',
+    'ORM options are limited compared to other languages.',
+  ],
+  commonlyUsedWith: [
+    { slug: 'postgresql', displayName: 'PostgreSQL' },
+    { slug: 'docker', displayName: 'Docker' },
+    { slug: 'redis', displayName: 'Redis' },
+    { slug: 'sqlite', displayName: 'SQLite' },
+    { slug: 'kubernetes', displayName: 'Kubernetes' },
+  ],
+  builds: [
+    {
+      id: '1',
+      name: 'StackRigs',
+      tagline: 'An open index of what developers build',
+      status: 'building' as const,
+      stack: [
+        { slug: 'go', displayName: 'Go' },
+        { slug: 'astro', displayName: 'Astro' },
+        { slug: 'sqlite', displayName: 'SQLite' },
+      ],
+      whatWorks: 'SQLite on a Pi 5 handles 500+ req/s.',
+      lastUpdated: '2026-03-01',
+    },
+    {
+      id: '7',
+      name: 'APIGate',
+      tagline: 'Lightweight API gateway',
+      status: 'launched' as const,
+      stack: [
+        { slug: 'go', displayName: 'Go' },
+        { slug: 'redis', displayName: 'Redis' },
+      ],
+      whatWorks: 'Sub-millisecond routing with zero allocations.',
+      lastUpdated: '2026-02-20',
+    },
+  ],
+};
+
+export function getStaticPaths() {
+  // In production, fetch all technology slugs from API
+  return [
+    { params: { slug: 'go' } },
+    { params: { slug: 'react' } },
+    { params: { slug: 'astro' } },
+    { params: { slug: 'sqlite' } },
+    { params: { slug: 'python' } },
+  ];
+}
+
+const metaDescription = `See how ${technology.buildCount} builders use ${technology.displayName} in production. Real stacks, real experiences.`;
+---
+
+<Page
+  title={`${technology.displayName} — StackRigs`}
+  description={metaDescription}
+>
+  <section class="page-section">
+    <!-- Header -->
+    <header class="stack-header">
+      <div>
+        <span class="stack-category font-mono text-muted">{technology.category}</span>
+        <h1>{technology.displayName}</h1>
+        <p class="stack-count">
+          <strong>{technology.buildCount}</strong> {t('stack.builds')}
+        </p>
+      </div>
+    </header>
+
+    <!-- What Works Aggregate -->
+    <section class="stack-section" aria-labelledby="stack-works">
+      <h2 id="stack-works" class="text-accent-green">{t('stack.whatWorksAggregate')}</h2>
+      <ul class="stack-insights stack-insights--green">
+        {technology.whatWorks.map(item => (
+          <li>{item}</li>
+        ))}
+      </ul>
+    </section>
+
+    <!-- What Broke Aggregate -->
+    <section class="stack-section" aria-labelledby="stack-broke">
+      <h2 id="stack-broke" class="text-accent-red">{t('stack.whatBrokeAggregate')}</h2>
+      <ul class="stack-insights stack-insights--red">
+        {technology.whatBroke.map(item => (
+          <li>{item}</li>
+        ))}
+      </ul>
+    </section>
+
+    <!-- Commonly Used With -->
+    <section class="stack-section" aria-labelledby="stack-common">
+      <h2 id="stack-common">{t('stack.commonlyUsedWith')}</h2>
+      <p class="text-secondary" style="margin-bottom: var(--space-4); font-size: var(--font-size-sm);">
+        {technology.displayName} is commonly used with:
+      </p>
+      <div class="stack-common-tags">
+        {technology.commonlyUsedWith.map(tech => (
+          <StackTag slug={tech.slug} displayName={tech.displayName} />
+        ))}
+      </div>
+    </section>
+
+    <!-- Builds Using This Tech -->
+    <section class="stack-section" aria-labelledby="stack-builds">
+      <h2 id="stack-builds">{t('stack.buildsUsing')} {technology.displayName}</h2>
+      <div class="grid-cards" style="margin-top: var(--space-6);">
+        {technology.builds.map(build => (
+          <BuildCard build={build} />
+        ))}
+      </div>
+    </section>
+  </section>
+</Page>
+
+<style>
+  .stack-header {
+    margin-bottom: var(--space-10);
+  }
+
+  .stack-category {
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: block;
+    margin-bottom: var(--space-2);
+  }
+
+  .stack-count {
+    margin-top: var(--space-2);
+    font-size: var(--font-size-lg);
+    color: var(--color-text-secondary);
+  }
+
+  .stack-section {
+    margin-bottom: var(--space-10);
+  }
+
+  .stack-section h2 {
+    margin-bottom: var(--space-4);
+  }
+
+  .stack-insights {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .stack-insights li {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .stack-insights--green li {
+    background: color-mix(in srgb, var(--color-accent-green) 6%, transparent);
+    border-left: 3px solid var(--color-accent-green);
+  }
+
+  .stack-insights--red li {
+    background: color-mix(in srgb, var(--color-accent-red) 6%, transparent);
+    border-left: 3px solid var(--color-accent-red);
+  }
+
+  .stack-common-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+</style>

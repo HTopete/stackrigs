@@ -1,0 +1,82 @@
+---
+import { detectLocaleFromPath, useTranslations, localePath, stripLocale } from '../i18n/index';
+
+const locale = detectLocaleFromPath(Astro.url.pathname);
+const t = useTranslations(locale);
+const altLocale = locale === 'en' ? 'es' : 'en';
+const altPath = localePath(altLocale, stripLocale(Astro.url.pathname));
+const altLabel = altLocale === 'en' ? 'EN' : 'ES';
+
+const navLinks = [
+  { href: localePath(locale, '/explore'), label: t('nav.explore') },
+  { href: localePath(locale, '/search'), label: t('nav.search') },
+  { href: localePath(locale, '/infra'), label: t('nav.infra') },
+  { href: localePath(locale, '/about'), label: t('nav.about') },
+];
+---
+
+<nav class="nav" aria-label="Main navigation">
+  <div class="container nav-inner">
+    <a href={localePath(locale, '/')} class="nav-logo" aria-label="StackRigs home">
+      <span class="nav-logo-mark" aria-hidden="true">SR</span>
+      <span>StackRigs</span>
+    </a>
+
+    <ul class="nav-links" role="list">
+      {navLinks.map(link => (
+        <li>
+          <a href={link.href} class="nav-link">{link.label}</a>
+        </li>
+      ))}
+    </ul>
+
+    <div class="nav-actions">
+      <a href={altPath} class="locale-toggle" aria-label={`Switch to ${altLabel}`}>
+        {altLabel}
+      </a>
+      <a href={localePath(locale, '/signin')} class="btn btn-primary btn-sm">
+        {t('nav.signIn')}
+      </a>
+      <button
+        class="hamburger"
+        aria-label="Toggle menu"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        data-hamburger
+      >
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-menu" id="mobile-menu" role="navigation" aria-label="Mobile navigation">
+    {navLinks.map(link => (
+      <a href={link.href}>{link.label}</a>
+    ))}
+    <a href={altPath} class="locale-toggle">{altLabel}</a>
+    <a href={localePath(locale, '/signin')} class="btn btn-primary">
+      {t('nav.signIn')}
+    </a>
+  </div>
+</nav>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    const btn = document.querySelector('[data-hamburger]');
+    const menu = document.getElementById('mobile-menu');
+    if (!btn || !menu) return;
+
+    btn.addEventListener('click', () => {
+      const open = menu.hasAttribute('data-open');
+      if (open) {
+        menu.removeAttribute('data-open');
+        btn.setAttribute('aria-expanded', 'false');
+      } else {
+        menu.setAttribute('data-open', '');
+        btn.setAttribute('aria-expanded', 'true');
+      }
+    });
+  });
+</script>

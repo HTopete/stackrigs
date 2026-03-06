@@ -1,0 +1,127 @@
+---
+import StatusBadge from './StatusBadge.astro';
+import StackTag from './StackTag.astro';
+import FreshnessDot from './FreshnessDot.astro';
+import { detectLocaleFromPath, useTranslations, localePath } from '../i18n/index';
+
+interface Build {
+  id: string;
+  name: string;
+  tagline?: string;
+  status: 'building' | 'launched' | 'paused' | 'abandoned';
+  stack?: Array<{ slug: string; displayName: string }>;
+  whatWorks?: string;
+  lastUpdated: string;
+  builderHandle?: string;
+}
+
+interface Props {
+  build: Build;
+}
+
+const { build } = Astro.props;
+const locale = detectLocaleFromPath(Astro.url.pathname);
+const t = useTranslations(locale);
+const buildUrl = localePath(locale, `/build/${build.id}`);
+---
+
+<a href={buildUrl} class="card build-card" data-astro-prefetch>
+  <div class="card-content">
+    <div class="card-main">
+      <div class="card-meta">
+        <StatusBadge status={build.status} />
+        <FreshnessDot lastUpdated={build.lastUpdated} />
+      </div>
+
+      <h3 class="build-card-title">{build.name}</h3>
+
+      {build.tagline && (
+        <p class="build-card-tagline">{build.tagline}</p>
+      )}
+
+      {build.stack && build.stack.length > 0 && (
+        <div class="build-card-tags">
+          {build.stack.slice(0, 5).map(tech => (
+            <StackTag slug={tech.slug} displayName={tech.displayName} />
+          ))}
+          {build.stack.length > 5 && (
+            <span class="tag text-muted">+{build.stack.length - 5}</span>
+          )}
+        </div>
+      )}
+
+      {build.whatWorks && (
+        <div class="build-card-works">
+          <span class="build-card-works-label text-accent-green" aria-hidden="true">&#10003;</span>
+          <span class="line-clamp-3">{build.whatWorks}</span>
+        </div>
+      )}
+    </div>
+  </div>
+</a>
+
+<style>
+  .build-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    container-type: inline-size;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+  }
+
+  .build-card-title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--space-1);
+  }
+
+  .build-card-tagline {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-3);
+  }
+
+  .build-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+
+  .build-card-works {
+    display: flex;
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .build-card-works-label {
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+
+  @container (max-width: 300px) {
+    .card-meta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-1);
+    }
+  }
+
+  @container (min-width: 400px) {
+    .card-content {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: var(--space-4);
+    }
+  }
+</style>

@@ -1,0 +1,49 @@
+services:
+  stackrigs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stackrigs
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - stackrigs-data:/data
+      - ./backups:/backups
+    env_file:
+      - .env
+    environment:
+      - DATABASE_PATH=/data/stackrigs.db
+    networks:
+      - stackrigs-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/stackrigs", "-healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: stackrigs-tunnel
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    networks:
+      - stackrigs-net
+    restart: unless-stopped
+    depends_on:
+      stackrigs:
+        condition: service_healthy
+
+volumes:
+  stackrigs-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/data
+
+networks:
+  stackrigs-net:
+    driver: bridge

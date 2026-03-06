@@ -1,0 +1,67 @@
+# Development override
+#
+# Backend only (hot-reload with air):
+#   docker compose -f docker-compose.dev.yml up --build stackrigs-dev
+#
+# Backend + frontend local dev:
+#   docker compose -f docker-compose.dev.yml up --build
+#
+# Or without Docker, use: make dev
+
+services:
+  stackrigs-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: stackrigs-dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./:/src
+      - ./data:/data
+      - ./backups:/backups
+    environment:
+      - PORT=8080
+      - ENV=dev
+      - DATABASE_PATH=/data/stackrigs.db
+      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:4321,http://localhost:8080
+      - WEBAUTHN_RP_ID=localhost
+      - WEBAUTHN_RP_ORIGINS=http://localhost:8080
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-dev-client-id}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-dev-client-secret}
+      - GITHUB_CALLBACK_URL=http://localhost:8080/api/auth/github/callback
+      - SESSION_SECRET=${SESSION_SECRET:-dev-session-secret-not-for-prod}
+    networks:
+      - stackrigs-dev-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  frontend-dev:
+    image: node:22-alpine
+    container_name: stackrigs-frontend-dev
+    working_dir: /app
+    ports:
+      - "4321:4321"
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    environment:
+      - PUBLIC_API_URL=http://localhost:8080
+    networks:
+      - stackrigs-dev-net
+    depends_on:
+      stackrigs-dev:
+        condition: service_healthy
+
+volumes:
+  frontend-node-modules:
+
+networks:
+  stackrigs-dev-net:
+    driver: bridge

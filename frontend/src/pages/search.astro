@@ -1,0 +1,117 @@
+---
+import Page from '../layouts/Page.astro';
+import SearchIsland from '../islands/SearchIsland';
+import { detectLocaleFromPath, useTranslations } from '../i18n/index';
+
+const locale = detectLocaleFromPath(Astro.url.pathname);
+const t = useTranslations(locale);
+---
+
+<Page
+  title={`${t('nav.search')} — StackRigs`}
+  description="Search for technologies, builders, and projects on StackRigs."
+>
+  <section class="page-section search-page">
+    <h1>{t('nav.search')}</h1>
+    <p class="text-secondary" style="margin-top: var(--space-2);">
+      Try searching for React, Supabase, or a builder name
+    </p>
+
+    <div style="margin-top: var(--space-8);">
+      <SearchIsland
+        client:visible
+        locale={locale}
+        placeholder={t('search.placeholder')}
+        noResultsText={t('common.noResults')}
+        loadingText={t('common.loading')}
+      />
+    </div>
+  </section>
+</Page>
+
+<style>
+  .search-page {
+    max-width: 700px;
+    margin-inline: auto;
+  }
+
+  .search-page h1 {
+    text-align: center;
+  }
+
+  .search-page > p {
+    text-align: center;
+    margin-inline: auto;
+  }
+
+  /* Island styles for search results */
+  :global(.search-island) {
+    position: relative;
+  }
+
+  :global(.search-results) {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: var(--space-2);
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-hover);
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: var(--z-dropdown);
+  }
+
+  :global(.search-group) {
+    padding: var(--space-2) 0;
+  }
+
+  :global(.search-group-label) {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: var(--space-2) var(--space-4);
+  }
+
+  :global(.search-result-item) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-2) var(--space-4);
+    text-decoration: none;
+    color: var(--color-text);
+    transition: background-color var(--duration-fast) var(--ease-out);
+  }
+
+  :global(.search-result-item:hover),
+  :global(.search-result-active) {
+    background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  }
+
+  :global(.search-result-name) {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+  }
+
+  :global(.search-result-subtitle) {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+  }
+
+  :global(.search-no-results) {
+    padding: var(--space-6);
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  :global(.search-loading) {
+    padding: var(--space-4);
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+</style>

@@ -1,0 +1,19 @@
+# StackRigs — Development Dockerfile with hot-reload (air)
+FROM golang:1.24-alpine
+
+RUN apk add --no-cache ca-certificates tzdata sqlite wget
+
+# Install air for hot-reload
+RUN go install github.com/air-verse/air@latest
+
+WORKDIR /src
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+# air watches for file changes and rebuilds
+COPY .air.toml .air.toml
+
+EXPOSE 8080
+
+CMD ["air", "-c", ".air.toml"]

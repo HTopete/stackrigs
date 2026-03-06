@@ -1,0 +1,867 @@
+openapi: 3.1.0
+info:
+  title: StackRigs API
+  description: |
+    REST API for StackRigs — a platform where builders share their tech stacks and projects.
+    Supports WebAuthn passkey authentication, GitHub OAuth, FTS5 full-text search,
+    SVG badge generation, and real-time infrastructure metrics via SSE.
+  version: 2.0.0
+  contact:
+    name: StackRigs
+    url: https://stackrigs.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://stackrigs.com
+    description: Production
+  - url: http://localhost:8080
+    description: Local development
+
+tags:
+  - name: Health
+    description: Server health check
+  - name: Auth
+    description: Authentication (WebAuthn passkeys and GitHub OAuth)
+  - name: Builders
+    description: Builder profiles
+  - name: Builds
+    description: Build projects
+  - name: Technologies
+    description: Technology catalog
+  - name: Search
+    description: Full-text search (FTS5)
+  - name: Infra
+    description: Infrastructure metrics and SSE stream
+  - name: Badges
+    description: SVG badge generation
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      tags: [Health]
+      summary: Server health check
+      responses:
+        "200":
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example:
+                status: ok
+                database: ok
+                version: "0.1.0"
+        "503":
+          description: Server is degraded
+
+  # --- Auth ---
+
+  /api/auth/webauthn/register/begin:
+    post:
+      operationId: beginWebAuthnRegistration
+      tags: [Auth]
+      summary: Begin WebAuthn passkey registration
+      description: Starts the WebAuthn registration ceremony. Requires an authenticated session.
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: PublicKeyCredentialCreationOptions for the client
+          content:
+            application/json:
+              schema:
+                type: object
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/auth/webauthn/register/finish:
+    post:
+      operationId: finishWebAuthnRegistration
+      tags: [Auth]
+      summary: Complete WebAuthn passkey registration
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: AuthenticatorAttestationResponse from the browser
+      responses:
+        "201":
+          description: Credential registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  credential_id:
+                    type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/auth/webauthn/login/begin:
+    post:
+      operationId: beginWebAuthnLogin
+      tags: [Auth]
+      summary: Begin WebAuthn passkey login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                handle:
+                  type: string
+                  description: Builder handle. Omit for discoverable credential flow.
+                  example: alice
+      responses:
+        "200":
+          description: PublicKeyCredentialRequestOptions for the client
+          content:
+            application/json:
+              schema:
+                type: object
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/auth/webauthn/login/finish:
+    post:
+      operationId: finishWebAuthnLogin
+      tags: [Auth]
+      summary: Complete WebAuthn passkey login
+      parameters:
+        - name: handle
+          in: query
+          schema:
+            type: string
+        - name: challenge_key
+          in: query
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: AuthenticatorAssertionResponse from the browser
+      responses:
+        "200":
+          description: Login successful, session cookie set
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  builder:
+                    $ref: "#/components/schemas/Builder"
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: stackrigs_session=abc123; Path=/; HttpOnly; SameSite=Lax
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/auth/github:
+    get:
+      operationId: githubOAuthRedirect
+      tags: [Auth]
+      summary: Redirect to GitHub OAuth authorization
+      responses:
+        "307":
+          description: Redirects to GitHub authorization page
+
+  /api/auth/github/callback:
+    get:
+      operationId: githubOAuthCallback
+      tags: [Auth]
+      summary: GitHub OAuth callback
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "307":
+          description: Redirects to frontend with session cookie set
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          description: Invalid OAuth state
+
+  /api/auth/logout:
+    post:
+      operationId: logout
+      tags: [Auth]
+      summary: Destroy current session
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /api/auth/me:
+    get:
+      operationId: getCurrentBuilder
+      tags: [Auth]
+      summary: Get the currently authenticated builder
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Authenticated builder info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  builder:
+                    $ref: "#/components/schemas/Builder"
+                  github:
+                    type: object
+                    properties:
+                      username:
+                        type: string
+                      avatar_url:
+                        type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # --- Builders ---
+
+  /api/builders/{handle}:
+    get:
+      operationId: getBuilderByHandle
+      tags: [Builders]
+      summary: Get a builder by handle
+      parameters:
+        - name: handle
+          in: path
+          required: true
+          schema:
+            type: string
+          example: alice
+      responses:
+        "200":
+          description: Builder profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Builder"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/builders:
+    post:
+      operationId: createBuilder
+      tags: [Builders]
+      summary: Create a new builder profile
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBuilderRequest"
+      responses:
+        "201":
+          description: Builder created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Builder"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          description: Handle already taken
+
+  # --- Builds ---
+
+  /api/builds:
+    get:
+      operationId: listBuilds
+      tags: [Builds]
+      summary: List builds with optional filtering
+      parameters:
+        - name: tech
+          in: query
+          schema:
+            type: string
+          description: Filter by technology slug
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [building, shipped, archived, paused]
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [updated, created, name]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Paginated list of builds
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedBuilds"
+    post:
+      operationId: createBuild
+      tags: [Builds]
+      summary: Create a new build
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBuildRequest"
+      responses:
+        "201":
+          description: Build created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Build"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/builds/{id}:
+    get:
+      operationId: getBuildByID
+      tags: [Builds]
+      summary: Get a build by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Build details with technologies and updates
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Build"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      operationId: updateBuild
+      tags: [Builds]
+      summary: Update a build
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBuildRequest"
+      responses:
+        "200":
+          description: Build updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Build"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # --- Technologies ---
+
+  /api/technologies:
+    get:
+      operationId: listTechnologies
+      tags: [Technologies]
+      summary: List all technologies sorted by build count
+      responses:
+        "200":
+          description: Array of technologies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Technology"
+
+  /api/technologies/{slug}:
+    get:
+      operationId: getTechnologyBySlug
+      tags: [Technologies]
+      summary: Get a technology and its builds
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+          example: go
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Technology details with paginated builds
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  technology:
+                    $ref: "#/components/schemas/Technology"
+                  builds:
+                    $ref: "#/components/schemas/PaginatedBuilds"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # --- Search ---
+
+  /api/search:
+    get:
+      operationId: search
+      tags: [Search]
+      summary: Full-text search across builders, builds, and technologies
+      description: |
+        Uses SQLite FTS5 with BM25 ranking and prefix matching.
+        Supports Spanish and English via porter + unicode61 tokenizer.
+        Falls back to LIKE queries for very short or special-character queries.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            maxLength: 100
+          example: react
+      responses:
+        "200":
+          description: Search results grouped by entity type
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  # --- Infra ---
+
+  /api/infra:
+    get:
+      operationId: getInfraMetrics
+      tags: [Infra]
+      summary: Get current infrastructure metrics
+      responses:
+        "200":
+          description: Infrastructure metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfraMetrics"
+              example:
+                uptime: "2d 5h 30m"
+                mem_total: "4096 MB"
+                mem_available: "2048 MB"
+                mem_used_pct: 50.0
+                load_avg: "0.5 0.3 0.2"
+                requests_min: 42
+                timestamp: "2026-03-05T12:00:00Z"
+
+  /api/infra/stream:
+    get:
+      operationId: streamInfraMetrics
+      tags: [Infra]
+      summary: Stream infrastructure metrics via SSE
+      description: |
+        Server-Sent Events endpoint that pushes metrics every 5 seconds.
+        Closes gracefully when the client disconnects.
+      responses:
+        "200":
+          description: SSE stream of metrics events
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: |
+                  Each event has format:
+                  event: metrics
+                  data: {"uptime":"...","mem_total":"...","mem_available":"...","mem_used_pct":0.0,"load_avg":"...","requests_min":0,"timestamp":"..."}
+
+  # --- Badges ---
+
+  /badge/{handle}.svg:
+    get:
+      operationId: getProfileBadge
+      tags: [Badges]
+      summary: SVG badge with builder handle and build count
+      description: shields.io-style badge with Editorial Zen color palette
+      parameters:
+        - name: handle
+          in: path
+          required: true
+          schema:
+            type: string
+          example: alice
+      responses:
+        "200":
+          description: SVG badge image
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: "public, max-age=3600"
+          content:
+            image/svg+xml:
+              schema:
+                type: string
+        "404":
+          description: Builder not found
+
+  /badge/{handle}/{buildId}.svg:
+    get:
+      operationId: getBuildBadge
+      tags: [Badges]
+      summary: SVG badge for a specific build with its tech stack
+      parameters:
+        - name: handle
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: buildId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: SVG badge image
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: "public, max-age=3600"
+          content:
+            image/svg+xml:
+              schema:
+                type: string
+        "404":
+          description: Build not found
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: stackrigs_session
+      description: Session cookie set after successful WebAuthn or GitHub OAuth login
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: authentication required
+            code: 401
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        database:
+          type: string
+        version:
+          type: string
+
+    Builder:
+      type: object
+      properties:
+        id:
+          type: integer
+        handle:
+          type: string
+        display_name:
+          type: string
+        bio:
+          type: string
+        avatar_url:
+          type: string
+        website:
+          type: string
+        github_url:
+          type: string
+        twitter_url:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateBuilderRequest:
+      type: object
+      required: [handle, display_name, invitation_code]
+      properties:
+        handle:
+          type: string
+          example: alice
+        display_name:
+          type: string
+          example: Alice Builder
+        bio:
+          type: string
+        avatar_url:
+          type: string
+        website:
+          type: string
+        github_url:
+          type: string
+        twitter_url:
+          type: string
+        invitation_code:
+          type: string
+
+    Build:
+      type: object
+      properties:
+        id:
+          type: integer
+        builder_id:
+          type: integer
+        builder:
+          $ref: "#/components/schemas/Builder"
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [building, shipped, archived, paused]
+        repo_url:
+          type: string
+        live_url:
+          type: string
+        cover_image:
+          type: string
+        technologies:
+          type: array
+          items:
+            $ref: "#/components/schemas/Technology"
+        updates:
+          type: array
+          items:
+            $ref: "#/components/schemas/BuildUpdate"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateBuildRequest:
+      type: object
+      required: [builder_id, name]
+      properties:
+        builder_id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [building, shipped, archived, paused]
+          default: building
+        repo_url:
+          type: string
+        live_url:
+          type: string
+        cover_image:
+          type: string
+        technologies:
+          type: array
+          items:
+            type: string
+          description: Array of technology slugs
+
+    UpdateBuildRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [building, shipped, archived, paused]
+        repo_url:
+          type: string
+        live_url:
+          type: string
+        cover_image:
+          type: string
+        technologies:
+          type: array
+          items:
+            type: string
+
+    BuildUpdate:
+      type: object
+      properties:
+        id:
+          type: integer
+        build_id:
+          type: integer
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    Technology:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        category:
+          type: string
+        build_count:
+          type: integer
+
+    SearchResult:
+      type: object
+      properties:
+        builders:
+          type: array
+          items:
+            $ref: "#/components/schemas/Builder"
+        builds:
+          type: array
+          items:
+            $ref: "#/components/schemas/Build"
+        technologies:
+          type: array
+          items:
+            $ref: "#/components/schemas/Technology"
+
+    InfraMetrics:
+      type: object
+      properties:
+        uptime:
+          type: string
+        mem_total:
+          type: string
+        mem_available:
+          type: string
+        mem_used_pct:
+          type: number
+        load_avg:
+          type: string
+        requests_min:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+
+    PaginatedBuilds:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Build"
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+        has_more:
+          type: boolean
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: integer
+        details:
+          type: string

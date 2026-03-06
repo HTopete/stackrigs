@@ -1,0 +1,56 @@
+---
+import Page from '../../layouts/Page.astro';
+import { detectLocaleFromPath, useTranslations, localePath } from '../../i18n/index';
+
+const locale = detectLocaleFromPath(Astro.url.pathname);
+const t = useTranslations(locale);
+---
+
+<Page
+  title={`${t('about.title')} — StackRigs`}
+  description="StackRigs es un indice abierto de lo que los developers realmente construyen. Sin feed, sin likes, sin algoritmo."
+>
+  <section class="page-section about-page">
+    <header class="about-header">
+      <h1>{t('about.manifesto')}</h1>
+      <p class="about-body">{t('about.manifestoBody')}</p>
+    </header>
+
+    <div class="about-anti-features">
+      <h2>{t('about.antiFeatures')}</h2>
+      <div class="anti-feature-grid">
+        <article class="anti-feature card">
+          <h3>{t('about.notFeed')}</h3>
+          <p>{t('about.notFeedDesc')}</p>
+        </article>
+        <article class="anti-feature card">
+          <h3>{t('about.notSocial')}</h3>
+          <p>{t('about.notSocialDesc')}</p>
+        </article>
+        <article class="anti-feature card">
+          <h3>{t('about.notMarketplace')}</h3>
+          <p>{t('about.notMarketplaceDesc')}</p>
+        </article>
+      </div>
+    </div>
+
+    <div class="about-cta">
+      <a href={localePath(locale, '/build/stackrigs')} class="btn btn-secondary" data-astro-prefetch>
+        {t('about.ownBuildLog')} &rarr;
+      </a>
+    </div>
+  </section>
+</Page>
+
+<style>
+  .about-page { max-width: 800px; margin-inline: auto; }
+  .about-header { margin-bottom: var(--space-12); }
+  .about-header h1 { font-size: var(--font-size-4xl); margin-bottom: var(--space-6); }
+  .about-body { font-size: var(--font-size-lg); color: var(--color-text-secondary); line-height: var(--line-height-relaxed); }
+  .about-anti-features { margin-bottom: var(--space-12); }
+  .about-anti-features h2 { margin-bottom: var(--space-6); }
+  .anti-feature-grid { display: grid; gap: var(--space-4); }
+  .anti-feature h3 { margin-bottom: var(--space-2); font-size: var(--font-size-lg); }
+  .anti-feature p { color: var(--color-text-secondary); font-size: var(--font-size-sm); }
+  .about-cta { text-align: center; padding-block: var(--space-8); }
+</style>

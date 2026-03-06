@@ -1,0 +1,122 @@
+---
+interface GalleryImage {
+  src: string;
+  alt: string;
+  caption?: string;
+}
+
+interface Props {
+  images: GalleryImage[];
+}
+
+const { images } = Astro.props;
+const count = images.length;
+---
+
+{images.length > 0 && (
+  <section class="gallery" aria-label="Setup gallery">
+    <div class="gallery-grid" data-count={count === 1 ? '1' : String(count)}>
+      {images.map((image, i) => (
+        <button
+          class="gallery-item"
+          type="button"
+          aria-label={`View image: ${image.alt}`}
+          data-gallery-trigger={i}
+        >
+          <img
+            src={image.src}
+            alt={image.alt}
+            loading="lazy"
+            decoding="async"
+          />
+          {image.caption && (
+            <span class="gallery-caption">{image.caption}</span>
+          )}
+        </button>
+      ))}
+    </div>
+
+    {images.map((image, i) => (
+      <dialog class="lightbox" data-gallery-dialog={i}>
+        <figure>
+          <img src={image.src} alt={image.alt} />
+          {image.caption && <figcaption>{image.caption}</figcaption>}
+        </figure>
+        <button
+          class="lightbox-close"
+          type="button"
+          aria-label="Close lightbox"
+          data-gallery-close={i}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </dialog>
+    ))}
+  </section>
+)}
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    document.querySelectorAll<HTMLButtonElement>('[data-gallery-trigger]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = btn.dataset.galleryTrigger;
+        const dialog = document.querySelector<HTMLDialogElement>(`[data-gallery-dialog="${idx}"]`);
+        dialog?.showModal();
+      });
+    });
+
+    document.querySelectorAll<HTMLButtonElement>('[data-gallery-close]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = btn.dataset.galleryClose;
+        const dialog = document.querySelector<HTMLDialogElement>(`[data-gallery-dialog="${idx}"]`);
+        dialog?.close();
+      });
+    });
+
+    document.querySelectorAll<HTMLDialogElement>('[data-gallery-dialog]').forEach(dialog => {
+      dialog.addEventListener('click', (e) => {
+        if (e.target === dialog) dialog.close();
+      });
+    });
+  });
+</script>
+
+<style>
+  .gallery {
+    margin-block: var(--space-8);
+  }
+
+  .lightbox-close {
+    position: absolute;
+    top: var(--space-4);
+    right: var(--space-4);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+  }
+
+  .lightbox-close:hover {
+    background: rgba(0, 0, 0, 0.7);
+  }
+
+  .lightbox {
+    position: relative;
+  }
+
+  .lightbox figcaption {
+    text-align: center;
+    padding: var(--space-3);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+  }
+</style>

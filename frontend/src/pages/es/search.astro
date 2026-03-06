@@ -1,0 +1,35 @@
+---
+import Page from '../../layouts/Page.astro';
+import SearchIsland from '../../islands/SearchIsland';
+import { detectLocaleFromPath, useTranslations } from '../../i18n/index';
+
+const locale = detectLocaleFromPath(Astro.url.pathname);
+const t = useTranslations(locale);
+---
+
+<Page
+  title={`${t('nav.search')} — StackRigs`}
+  description="Busca tecnologias, builders y proyectos en StackRigs."
+>
+  <section class="page-section search-page">
+    <h1>{t('nav.search')}</h1>
+    <p class="text-secondary" style="margin-top: var(--space-2);">
+      Prueba buscando React, Supabase, o un nombre de builder
+    </p>
+    <div style="margin-top: var(--space-8);">
+      <SearchIsland
+        client:visible
+        locale={locale}
+        placeholder={t('search.placeholder')}
+        noResultsText={t('common.noResults')}
+        loadingText={t('common.loading')}
+      />
+    </div>
+  </section>
+</Page>
+
+<style>
+  .search-page { max-width: 700px; margin-inline: auto; }
+  .search-page h1 { text-align: center; }
+  .search-page > p { text-align: center; margin-inline: auto; }
+</style>

@@ -1,0 +1,97 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import { detectLocaleFromPath } from '../i18n/index';
+
+interface Props {
+  title: string;
+  description: string;
+  canonical?: string;
+  ogImage?: string;
+  ogType?: string;
+}
+
+const { title, description, canonical, ogImage, ogType = 'website' } = Astro.props;
+const locale = detectLocaleFromPath(Astro.url.pathname);
+const langAttr = locale === 'es' ? 'es' : 'en';
+const canonicalURL = canonical || Astro.url.href;
+const ogImageURL = ogImage || `${Astro.url.origin}/og-default.png`;
+---
+
+<!doctype html>
+<html lang={langAttr}>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="generator" content={Astro.generator} />
+
+  <!-- SEO -->
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonicalURL} />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content={ogType} />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:url" content={canonicalURL} />
+  <meta property="og:image" content={ogImageURL} />
+  <meta property="og:site_name" content="StackRigs" />
+  <meta property="og:locale" content={langAttr} />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image" content={ogImageURL} />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Serif+Display&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Styles -->
+  <style>
+    @import '../styles/global.css';
+  </style>
+
+  <!-- View Transitions -->
+  <ClientRouter />
+
+  <!-- Speculation Rules for intelligent prefetch -->
+  <script type="speculationrules">
+    {
+      "prerender": [
+        {
+          "where": {
+            "and": [
+              { "href_matches": "/*" },
+              { "not": { "href_matches": "/api/*" } }
+            ]
+          },
+          "eagerness": "moderate"
+        }
+      ],
+      "prefetch": [
+        {
+          "where": {
+            "and": [
+              { "href_matches": "/*" },
+              { "not": { "href_matches": "/api/*" } }
+            ]
+          },
+          "eagerness": "conservative"
+        }
+      ]
+    }
+  </script>
+</head>
+<body>
+  <slot />
+</body>
+</html>

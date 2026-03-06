@@ -1,0 +1,57 @@
+---
+import Page from '../../layouts/Page.astro';
+import BuildCard from '../../components/BuildCard.astro';
+import { detectLocaleFromPath, useTranslations } from '../../i18n/index';
+
+const locale = detectLocaleFromPath(Astro.url.pathname);
+const t = useTranslations(locale);
+
+const builds = [
+  {
+    id: '1', name: 'StackRigs', tagline: 'An open index of what developers build',
+    status: 'building' as const,
+    stack: [{ slug: 'go', displayName: 'Go' }, { slug: 'astro', displayName: 'Astro' }],
+    whatWorks: 'SQLite on a Pi 5 handles 500+ req/s.',
+    lastUpdated: '2026-03-01',
+  },
+];
+
+const technologies = ['Go', 'React', 'Python', 'Rust', 'TypeScript', 'Astro'];
+const statuses = ['building', 'launched', 'paused', 'abandoned'];
+---
+
+<Page
+  title={`${t('explore.title')} — StackRigs`}
+  description="Explora build logs reales de developers alrededor del mundo."
+>
+  <section class="page-section">
+    <h1>{t('explore.title')}</h1>
+    <div class="explore-layout" style="margin-top: var(--space-8);">
+      <aside class="filters" aria-label={t('explore.filterBy')}>
+        <div class="filter-group">
+          <h3 class="filter-group-title">{t('explore.technology')}</h3>
+          {technologies.map(tech => (
+            <label class="filter-option">
+              <input type="checkbox" name="tech" value={tech.toLowerCase()} />
+              {tech}
+            </label>
+          ))}
+        </div>
+        <div class="filter-group">
+          <h3 class="filter-group-title">{t('explore.status')}</h3>
+          {statuses.map(status => (
+            <label class="filter-option">
+              <input type="checkbox" name="status" value={status} />
+              {t(`buildLog.status.${status}`)}
+            </label>
+          ))}
+        </div>
+      </aside>
+      <div>
+        <div class="grid-cards">
+          {builds.map(build => <BuildCard build={build} />)}
+        </div>
+      </div>
+    </div>
+  </section>
+</Page>

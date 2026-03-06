@@ -1,0 +1,39 @@
+# StackRigs — Cron Jobs (2026 Architecture)
+# Install with:  crontab crontab.example
+# Edit after:    crontab -e
+
+# Adjust STACKRIGS_DIR to match your installation path
+STACKRIGS_DIR=/opt/stackrigs
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+
+# ---- Backups ---------------------------------------------------------------
+
+# Hot backup every hour (at minute 0) — includes R2 upload if configured
+0 * * * * $STACKRIGS_DIR/scripts/backup.sh >> $STACKRIGS_DIR/backups/cron.log 2>&1
+
+# ---- Cleanup ----------------------------------------------------------------
+
+# Delete local backups older than BACKUP_RETENTION_DAYS (daily at 03:00)
+0 3 * * * find $STACKRIGS_DIR/backups -maxdepth 1 \( -name "stackrigs-*.db" -o -name "stackrigs-*.db.gz" \) -type f -mtime +30 -delete >> $STACKRIGS_DIR/backups/cron.log 2>&1
+
+# Cleanup expired sessions (daily at 04:00)
+0 4 * * * sqlite3 $STACKRIGS_DIR/data/stackrigs.db "DELETE FROM sessions WHERE expires_at < datetime('now');" >> $STACKRIGS_DIR/backups/cron.log 2>&1
+
+# ---- Maintenance ------------------------------------------------------------
+
+# Rebuild FTS5 search index (weekly on Sunday at 05:00)
+0 5 * * 0 sqlite3 $STACKRIGS_DIR/data/stackrigs.db "INSERT INTO search_index(search_index) VALUES('rebuild');" >> $STACKRIGS_DIR/backups/cron.log 2>&1
+
+# Optimize SQLite WAL checkpoint (daily at 02:00)
+0 2 * * * sqlite3 $STACKRIGS_DIR/data/stackrigs.db "PRAGMA wal_checkpoint(TRUNCATE);" >> $STACKRIGS_DIR/backups/cron.log 2>&1
+
+# ---- Docker -----------------------------------------------------------------
+
+# Prune unused Docker images (weekly on Saturday at 04:00)
+0 4 * * 6 docker image prune -f >> $STACKRIGS_DIR/backups/cron.log 2>&1
+
+# ---- Monitoring --------------------------------------------------------------
+
+# Quick health check every 5 minutes — restart if down
+*/5 * * * * curl -sf http://localhost:8080/health > /dev/null || (cd $STACKRIGS_DIR && docker compose restart stackrigs) >> $STACKRIGS_DIR/backups/cron.log 2>&1

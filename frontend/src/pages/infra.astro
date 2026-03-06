@@ -1,0 +1,139 @@
+---
+import Page from '../layouts/Page.astro';
+import InfraLive from '../islands/InfraLive';
+import StackTag from '../components/StackTag.astro';
+import { detectLocaleFromPath, useTranslations, localePath } from '../i18n/index';
+
+const locale = detectLocaleFromPath(Astro.url.pathname);
+const t = useTranslations(locale);
+
+const projectStack = [
+  { slug: 'go', displayName: 'Go' },
+  { slug: 'astro', displayName: 'Astro' },
+  { slug: 'sqlite', displayName: 'SQLite' },
+  { slug: 'cloudflare', displayName: 'Cloudflare' },
+  { slug: 'docker', displayName: 'Docker' },
+];
+
+const infraLabels = {
+  uptime: t('infra.uptime'),
+  latency: t('infra.latency'),
+  requestsPerMinute: t('infra.requestsPerMinute'),
+  memoryUsage: t('infra.memoryUsage'),
+};
+---
+
+<Page
+  title={`${t('nav.infra')} — StackRigs`}
+  description="Live infrastructure metrics for StackRigs, running on a Raspberry Pi 5 in Mazatlan, Mexico."
+>
+  <section class="page-section">
+    <h1>{t('nav.infra')}</h1>
+    <p class="text-secondary" style="margin-top: var(--space-2); font-size: var(--font-size-lg);">
+      {t('infra.hostingNote')}
+    </p>
+
+    <!-- Live Metrics -->
+    <div style="margin-top: var(--space-10);">
+      <InfraLive
+        client:visible
+        labels={infraLabels}
+      />
+    </div>
+
+    <!-- Pi Photo -->
+    <div class="infra-photo" style="margin-top: var(--space-10);">
+      <div class="card">
+        <div class="infra-photo-placeholder">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <path d="m21 15-5-5L5 21" />
+          </svg>
+          <p class="text-muted font-mono" style="font-size: var(--font-size-sm);">Pi 5 photo placeholder</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project Stack -->
+    <div style="margin-top: var(--space-10);">
+      <h2>Stack</h2>
+      <div class="infra-stack-tags" style="margin-top: var(--space-4);">
+        {projectStack.map(tech => (
+          <StackTag slug={tech.slug} displayName={tech.displayName} />
+        ))}
+      </div>
+    </div>
+
+    <!-- Uptime History -->
+    <div style="margin-top: var(--space-10);">
+      <h2>{t('infra.uptime')} History</h2>
+      <div class="uptime-history" style="margin-top: var(--space-4);">
+        <div class="uptime-bar">
+          {Array.from({ length: 30 }, (_, i) => {
+            const isDown = i === 12 || i === 23;
+            return (
+              <div
+                class={`uptime-day ${isDown ? 'uptime-day-down' : 'uptime-day-up'}`}
+                title={`Day ${30 - i}: ${isDown ? 'Partial outage' : '100% uptime'}`}
+                aria-label={`Day ${30 - i}: ${isDown ? 'Partial outage' : '100% uptime'}`}
+              />
+            );
+          })}
+        </div>
+        <div class="uptime-labels">
+          <span class="text-muted font-mono" style="font-size: var(--font-size-xs);">30 days ago</span>
+          <span class="text-muted font-mono" style="font-size: var(--font-size-xs);">Today</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</Page>
+
+<style>
+  .infra-photo-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    padding: var(--space-12);
+    color: var(--color-text-muted);
+  }
+
+  .infra-stack-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .uptime-bar {
+    display: flex;
+    gap: 2px;
+  }
+
+  .uptime-day {
+    flex: 1;
+    height: 32px;
+    border-radius: 2px;
+    transition: opacity var(--duration-fast) var(--ease-out);
+  }
+
+  .uptime-day:hover {
+    opacity: 0.8;
+  }
+
+  .uptime-day-up {
+    background: var(--color-accent-green);
+  }
+
+  .uptime-day-down {
+    background: var(--color-accent-red);
+  }
+
+  .uptime-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: var(--space-2);
+  }
+</style>

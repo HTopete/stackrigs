@@ -1,0 +1,196 @@
+---
+import Page from '../layouts/Page.astro';
+import BuildCard from '../components/BuildCard.astro';
+import StackTag from '../components/StackTag.astro';
+import { detectLocaleFromPath, useTranslations, localePath } from '../i18n/index';
+
+const locale = detectLocaleFromPath(Astro.url.pathname);
+const t = useTranslations(locale);
+
+// Mock data — replace with API calls
+const recentBuilds = [
+  {
+    id: '1',
+    name: 'StackRigs',
+    tagline: 'An open index of what developers build',
+    status: 'building' as const,
+    stack: [
+      { slug: 'go', displayName: 'Go' },
+      { slug: 'astro', displayName: 'Astro' },
+      { slug: 'sqlite', displayName: 'SQLite' },
+    ],
+    whatWorks: 'SQLite on a Pi 5 handles 500+ req/s without breaking a sweat.',
+    lastUpdated: '2026-03-01',
+  },
+  {
+    id: '2',
+    name: 'DataForge',
+    tagline: 'ETL pipelines for small teams',
+    status: 'launched' as const,
+    stack: [
+      { slug: 'python', displayName: 'Python' },
+      { slug: 'postgresql', displayName: 'PostgreSQL' },
+      { slug: 'docker', displayName: 'Docker' },
+    ],
+    whatWorks: 'PostgreSQL logical replication is rock solid for CDC.',
+    lastUpdated: '2026-02-15',
+  },
+  {
+    id: '3',
+    name: 'Noteship',
+    tagline: 'Offline-first notes with sync',
+    status: 'building' as const,
+    stack: [
+      { slug: 'react', displayName: 'React' },
+      { slug: 'crdts', displayName: 'CRDTs' },
+      { slug: 'cloudflare-workers', displayName: 'CF Workers' },
+    ],
+    lastUpdated: '2026-02-28',
+  },
+  {
+    id: '4',
+    name: 'Deploybot',
+    tagline: 'One-click deploys for side projects',
+    status: 'paused' as const,
+    stack: [
+      { slug: 'rust', displayName: 'Rust' },
+      { slug: 'fly-io', displayName: 'Fly.io' },
+    ],
+    whatWorks: 'Fly Machines API is underrated for programmatic deploys.',
+    lastUpdated: '2025-12-10',
+  },
+  {
+    id: '5',
+    name: 'PixelBoard',
+    tagline: 'Collaborative pixel art canvas',
+    status: 'launched' as const,
+    stack: [
+      { slug: 'nextjs', displayName: 'Next.js' },
+      { slug: 'redis', displayName: 'Redis' },
+      { slug: 'websockets', displayName: 'WebSockets' },
+    ],
+    lastUpdated: '2026-01-20',
+  },
+  {
+    id: '6',
+    name: 'FormCraft',
+    tagline: 'Type-safe form builder',
+    status: 'abandoned' as const,
+    stack: [
+      { slug: 'typescript', displayName: 'TypeScript' },
+      { slug: 'zod', displayName: 'Zod' },
+    ],
+    lastUpdated: '2025-08-15',
+  },
+];
+
+const popularStacks = [
+  { slug: 'react', displayName: 'React', count: 142 },
+  { slug: 'nextjs', displayName: 'Next.js', count: 98 },
+  { slug: 'typescript', displayName: 'TypeScript', count: 87 },
+  { slug: 'postgresql', displayName: 'PostgreSQL', count: 76 },
+  { slug: 'docker', displayName: 'Docker', count: 71 },
+  { slug: 'go', displayName: 'Go', count: 65 },
+  { slug: 'tailwind', displayName: 'Tailwind', count: 59 },
+  { slug: 'python', displayName: 'Python', count: 54 },
+  { slug: 'redis', displayName: 'Redis', count: 48 },
+  { slug: 'sqlite', displayName: 'SQLite', count: 42 },
+  { slug: 'rust', displayName: 'Rust', count: 38 },
+  { slug: 'astro', displayName: 'Astro', count: 31 },
+];
+---
+
+<Page
+  title="StackRigs — An open index of what builders are actually building"
+  description="Real stacks, real infrastructure, real experiences. See what developers are building and how."
+>
+  <!-- Hero -->
+  <section class="hero" aria-labelledby="hero-title">
+    <h1 id="hero-title">{t('hero.title')}</h1>
+    <p class="hero-subtitle">{t('hero.subtitle')}</p>
+    <div class="hero-actions">
+      <a href={localePath(locale, '/explore')} class="btn btn-primary">{t('hero.cta')}</a>
+      <a href={localePath(locale, '/signin')} class="btn btn-secondary">{t('hero.ctaSecondary')}</a>
+    </div>
+  </section>
+
+  <!-- Recent Builds -->
+  <section class="page-section" aria-labelledby="recent-builds-title">
+    <h2 id="recent-builds-title">{t('hero.recentBuilds')}</h2>
+    <div class="grid-cards" style="margin-top: var(--space-6);">
+      {recentBuilds.map(build => (
+        <BuildCard build={build} />
+      ))}
+    </div>
+  </section>
+
+  <!-- Popular Stacks -->
+  <section class="page-section" aria-labelledby="popular-stacks-title">
+    <h2 id="popular-stacks-title">{t('hero.popularStacks')}</h2>
+    <div class="popular-stacks" style="margin-top: var(--space-6);">
+      {popularStacks.map(stack => (
+        <a href={localePath(locale, `/stack/${stack.slug}`)} class="popular-stack-item" data-astro-prefetch>
+          <span class="popular-stack-name">{stack.displayName}</span>
+          <span class="popular-stack-count font-mono text-muted">{stack.count} {t('stack.builds')}</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- Pi Note -->
+  <section class="page-section text-center">
+    <a href={localePath(locale, '/infra')} class="pi-note" data-astro-prefetch>
+      <span class="freshness-dot freshness-active" aria-hidden="true"></span>
+      {t('hero.piNote')}
+    </a>
+  </section>
+</Page>
+
+<style>
+  .popular-stacks {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+    gap: var(--space-3);
+  }
+
+  .popular-stack-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+    transition:
+      box-shadow var(--duration-normal) var(--ease-out),
+      transform var(--duration-normal) var(--ease-out);
+  }
+
+  .popular-stack-item:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-1px);
+  }
+
+  .popular-stack-name {
+    font-weight: 500;
+    font-size: var(--font-size-sm);
+  }
+
+  .popular-stack-count {
+    font-size: var(--font-size-xs);
+  }
+
+  .pi-note {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .pi-note:hover {
+    color: var(--color-accent);
+  }
+</style>

@@ -1,0 +1,45 @@
+---
+import Page from '../../layouts/Page.astro';
+import InfraLive from '../../islands/InfraLive';
+import StackTag from '../../components/StackTag.astro';
+import { detectLocaleFromPath, useTranslations, localePath } from '../../i18n/index';
+
+const locale = detectLocaleFromPath(Astro.url.pathname);
+const t = useTranslations(locale);
+
+const projectStack = [
+  { slug: 'go', displayName: 'Go' },
+  { slug: 'astro', displayName: 'Astro' },
+  { slug: 'sqlite', displayName: 'SQLite' },
+  { slug: 'cloudflare', displayName: 'Cloudflare' },
+  { slug: 'docker', displayName: 'Docker' },
+];
+
+const infraLabels = {
+  uptime: t('infra.uptime'),
+  latency: t('infra.latency'),
+  requestsPerMinute: t('infra.requestsPerMinute'),
+  memoryUsage: t('infra.memoryUsage'),
+};
+---
+
+<Page
+  title={`${t('nav.infra')} — StackRigs`}
+  description="Metricas en vivo de la infraestructura de StackRigs, corriendo en una Raspberry Pi 5 en Mazatlan, Mexico."
+>
+  <section class="page-section">
+    <h1>{t('nav.infra')}</h1>
+    <p class="text-secondary" style="margin-top: var(--space-2); font-size: var(--font-size-lg);">
+      {t('infra.hostingNote')}
+    </p>
+    <div style="margin-top: var(--space-10);">
+      <InfraLive client:visible labels={infraLabels} />
+    </div>
+    <div style="margin-top: var(--space-10);">
+      <h2>Stack</h2>
+      <div style="display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4);">
+        {projectStack.map(tech => <StackTag slug={tech.slug} displayName={tech.displayName} />)}
+      </div>
+    </div>
+  </section>
+</Page>

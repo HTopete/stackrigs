@@ -1,0 +1,122 @@
+{
+  "nav": {
+    "home": "Home",
+    "explore": "Explore",
+    "search": "Search",
+    "about": "About",
+    "infra": "Infra",
+    "signIn": "Sign In"
+  },
+  "buildLog": {
+    "stack": "Stack",
+    "infrastructure": "Infrastructure",
+    "tools": "Tools",
+    "aiTools": "AI Tools",
+    "whatWorks": "What Works",
+    "whatBroke": "What Broke",
+    "whatIdChange": "What I'd Change",
+    "status": {
+      "label": "Status",
+      "building": "Building",
+      "launched": "Launched",
+      "paused": "Paused",
+      "abandoned": "Abandoned"
+    }
+  },
+  "builder": {
+    "bio": "Bio",
+    "builds": "Builds",
+    "memberSince": "Member since",
+    "lastActive": "Last active"
+  },
+  "updates": {
+    "stackChange": "Stack Change",
+    "infraChange": "Infra Change",
+    "toolChange": "Tool Change",
+    "milestone": "Milestone",
+    "reflection": "Reflection",
+    "pivot": "Pivot"
+  },
+  "search": {
+    "placeholder": "Search by technology, builder, or project..."
+  },
+  "infra": {
+    "uptime": "Uptime",
+    "latency": "Latency",
+    "requestsPerMinute": "Requests per minute",
+    "memoryUsage": "Memory usage",
+    "hostingNote": "This page runs on a Raspberry Pi 5 in Mazatlan, Mexico"
+  },
+  "common": {
+    "showMore": "Show more",
+    "showLess": "Show less",
+    "updated": "Updated",
+    "created": "Created",
+    "views": "views",
+    "noResults": "No results",
+    "loading": "Loading"
+  },
+  "freshness": {
+    "active": "Active",
+    "semiActive": "Semi-active",
+    "archived": "Archived"
+  },
+  "cta": {
+    "addToReadme": "Add to your README",
+    "copyEmbedCode": "Copy embed code"
+  },
+  "footer": {
+    "builtWith": "Built with Go + Astro + SQLite. Running on a Raspberry Pi 5."
+  },
+  "hero": {
+    "title": "An open index of what builders are actually building.",
+    "subtitle": "Real stacks. Real infra. No noise.",
+    "cta": "Explore Builds",
+    "ctaSecondary": "Show Your Build",
+    "recentBuilds": "Recent Builds",
+    "popularStacks": "Popular Stacks",
+    "piNote": "Running on a Raspberry Pi 5"
+  },
+  "explore": {
+    "title": "Explore Builds",
+    "filterBy": "Filter by",
+    "technology": "Technology",
+    "status": "Status",
+    "sortBy": "Sort by",
+    "sortUpdated": "Recently Updated",
+    "sortCreated": "Recently Created",
+    "prev": "Previous",
+    "next": "Next"
+  },
+  "about": {
+    "title": "About StackRigs",
+    "manifesto": "Show your build, not your brand",
+    "manifestoBody": "StackRigs is an open index of what developers are actually building. No feed. No likes. No algorithm. Just honest build logs from real people shipping real things.",
+    "notFeed": "Not a feed",
+    "notFeedDesc": "No infinite scroll. No engagement metrics. Your build log is a document, not a post.",
+    "notSocial": "Not social media",
+    "notSocialDesc": "No followers, no likes, no comments. Just builds.",
+    "notMarketplace": "Not a marketplace",
+    "notMarketplaceDesc": "No sponsored placements. No affiliate links. No pay-to-play.",
+    "antiFeatures": "Anti-features as features",
+    "ownBuildLog": "See our own Build Log"
+  },
+  "stack": {
+    "builds": "builds",
+    "whatWorksAggregate": "What builders say works",
+    "whatBrokeAggregate": "What builders say broke",
+    "commonlyUsedWith": "Commonly used with",
+    "buildsUsing": "Builds using"
+  },
+  "embed": {
+    "preview": "Embed Preview",
+    "copyCode": "Copy embed code",
+    "copied": "Copied!",
+    "addToReadme": "Add to your README"
+  },
+  "errors": {
+    "notFound": "Not found",
+    "somethingWentWrong": "Something went wrong",
+    "rateLimited": "Rate limited"
+  }
+}

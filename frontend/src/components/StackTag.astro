@@ -1,0 +1,16 @@
+---
+import { detectLocaleFromPath, localePath } from '../i18n/index';
+
+interface Props {
+  slug: string;
+  displayName: string;
+}
+
+const { slug, displayName } = Astro.props;
+const locale = detectLocaleFromPath(Astro.url.pathname);
+const href = localePath(locale, `/stack/${slug}`);
+---
+
+<a href={href} class="tag" data-astro-prefetch>
+  {displayName}
+</a>

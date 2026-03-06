@@ -1,0 +1,110 @@
+---
+// Spanish version of the homepage
+// The locale is auto-detected from the URL path by i18n helpers.
+// All content and labels render in Spanish via useTranslations('es').
+
+import Page from '../../layouts/Page.astro';
+import BuildCard from '../../components/BuildCard.astro';
+import StackTag from '../../components/StackTag.astro';
+import { detectLocaleFromPath, useTranslations, localePath } from '../../i18n/index';
+
+const locale = detectLocaleFromPath(Astro.url.pathname);
+const t = useTranslations(locale);
+
+// Mock data -- same as English; in production fetched from API
+const recentBuilds = [
+  {
+    id: '1', name: 'StackRigs', tagline: 'An open index of what developers build',
+    status: 'building' as const,
+    stack: [{ slug: 'go', displayName: 'Go' }, { slug: 'astro', displayName: 'Astro' }, { slug: 'sqlite', displayName: 'SQLite' }],
+    whatWorks: 'SQLite on a Pi 5 handles 500+ req/s without breaking a sweat.',
+    lastUpdated: '2026-03-01',
+  },
+  {
+    id: '2', name: 'DataForge', tagline: 'ETL pipelines for small teams',
+    status: 'launched' as const,
+    stack: [{ slug: 'python', displayName: 'Python' }, { slug: 'postgresql', displayName: 'PostgreSQL' }],
+    whatWorks: 'PostgreSQL logical replication is rock solid for CDC.',
+    lastUpdated: '2026-02-15',
+  },
+  {
+    id: '3', name: 'Noteship', tagline: 'Offline-first notes with sync',
+    status: 'building' as const,
+    stack: [{ slug: 'react', displayName: 'React' }, { slug: 'crdts', displayName: 'CRDTs' }],
+    lastUpdated: '2026-02-28',
+  },
+];
+
+const popularStacks = [
+  { slug: 'react', displayName: 'React', count: 142 },
+  { slug: 'nextjs', displayName: 'Next.js', count: 98 },
+  { slug: 'typescript', displayName: 'TypeScript', count: 87 },
+  { slug: 'go', displayName: 'Go', count: 65 },
+  { slug: 'python', displayName: 'Python', count: 54 },
+  { slug: 'sqlite', displayName: 'SQLite', count: 42 },
+];
+---
+
+<Page
+  title="StackRigs — Un indice abierto de lo que los developers construyen"
+  description="Stacks reales, infraestructura real, experiencias reales. Ve lo que los developers construyen y como."
+>
+  <section class="hero" aria-labelledby="hero-title">
+    <h1 id="hero-title">{t('hero.title')}</h1>
+    <p class="hero-subtitle">{t('hero.subtitle')}</p>
+    <div class="hero-actions">
+      <a href={localePath(locale, '/explore')} class="btn btn-primary">{t('hero.cta')}</a>
+      <a href={localePath(locale, '/signin')} class="btn btn-secondary">{t('hero.ctaSecondary')}</a>
+    </div>
+  </section>
+
+  <section class="page-section" aria-labelledby="recent-builds-title">
+    <h2 id="recent-builds-title">{t('hero.recentBuilds')}</h2>
+    <div class="grid-cards" style="margin-top: var(--space-6);">
+      {recentBuilds.map(build => <BuildCard build={build} />)}
+    </div>
+  </section>
+
+  <section class="page-section" aria-labelledby="popular-stacks-title">
+    <h2 id="popular-stacks-title">{t('hero.popularStacks')}</h2>
+    <div class="popular-stacks" style="margin-top: var(--space-6);">
+      {popularStacks.map(stack => (
+        <a href={localePath(locale, `/stack/${stack.slug}`)} class="popular-stack-item" data-astro-prefetch>
+          <span class="popular-stack-name">{stack.displayName}</span>
+          <span class="popular-stack-count font-mono text-muted">{stack.count} {t('stack.builds')}</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section class="page-section text-center">
+    <a href={localePath(locale, '/infra')} class="pi-note" data-astro-prefetch>
+      <span class="freshness-dot freshness-active" aria-hidden="true"></span>
+      {t('hero.piNote')}
+    </a>
+  </section>
+</Page>
+
+<style>
+  .popular-stacks {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+    gap: var(--space-3);
+  }
+  .popular-stack-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-surface); border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+    transition: box-shadow var(--duration-normal) var(--ease-out), transform var(--duration-normal) var(--ease-out);
+  }
+  .popular-stack-item:hover { box-shadow: var(--shadow-hover); transform: translateY(-1px); }
+  .popular-stack-name { font-weight: 500; font-size: var(--font-size-sm); }
+  .popular-stack-count { font-size: var(--font-size-xs); }
+  .pi-note {
+    display: inline-flex; align-items: center; gap: var(--space-2);
+    font-family: var(--font-mono); font-size: var(--font-size-sm);
+    color: var(--color-text-secondary); transition: color var(--duration-fast) var(--ease-out);
+  }
+  .pi-note:hover { color: var(--color-accent); }
+</style>

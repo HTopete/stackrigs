@@ -1,0 +1,39 @@
+---
+import { detectLocaleFromPath, useTranslations } from '../i18n/index';
+
+interface Props {
+  status: 'building' | 'launched' | 'paused' | 'abandoned';
+}
+
+const { status } = Astro.props;
+const locale = detectLocaleFromPath(Astro.url.pathname);
+const t = useTranslations(locale);
+
+const statusLabels: Record<string, string> = {
+  building: t('buildLog.status.building'),
+  launched: t('buildLog.status.launched'),
+  paused: t('buildLog.status.paused'),
+  abandoned: t('buildLog.status.abandoned'),
+};
+
+const dotColors: Record<string, string> = {
+  building: 'var(--color-accent)',
+  launched: 'var(--color-accent-green)',
+  paused: 'var(--color-accent-yellow)',
+  abandoned: 'var(--color-accent-red)',
+};
+---
+
+<span class={`badge badge-${status}`} role="status">
+  <span class="badge-dot" style={`background-color: ${dotColors[status]}`} aria-hidden="true"></span>
+  {statusLabels[status]}
+</span>
+
+<style>
+  .badge-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+</style>

@@ -1,0 +1,308 @@
+---
+import StackTag from './StackTag.astro';
+import StatusBadge from './StatusBadge.astro';
+import FreshnessDot from './FreshnessDot.astro';
+import { detectLocaleFromPath, useTranslations } from '../i18n/index';
+
+interface UpdateEntry {
+  type: 'pivot' | 'stack_change' | 'milestone' | 'reflection' | 'infra_change' | 'tool_change';
+  date: string;
+  title: string;
+  body: string;
+}
+
+interface Build {
+  id: string;
+  name: string;
+  tagline?: string;
+  status: 'building' | 'launched' | 'paused' | 'abandoned';
+  stack?: Array<{ slug: string; displayName: string }>;
+  infrastructure?: {
+    hosting?: string;
+    database?: string;
+    cdn?: string;
+    cicd?: string;
+    monitoring?: string;
+  };
+  aiTools?: Array<{
+    name: string;
+    model?: string;
+    usage?: string;
+  }>;
+  whatWorks?: string;
+  whatBroke?: string;
+  whatIdChange?: string;
+  updates?: UpdateEntry[];
+  lastUpdated: string;
+}
+
+interface Props {
+  build: Build;
+}
+
+const { build } = Astro.props;
+const locale = detectLocaleFromPath(Astro.url.pathname);
+const t = useTranslations(locale);
+
+const updateTypeLabels: Record<string, string> = {
+  pivot: t('updates.pivot'),
+  stack_change: t('updates.stackChange'),
+  milestone: t('updates.milestone'),
+  reflection: t('updates.reflection'),
+  infra_change: t('updates.infraChange'),
+  tool_change: t('updates.toolChange'),
+};
+---
+
+<article class="build-log" aria-label={`Build log for ${build.name}`}>
+  <header class="build-log-header">
+    <h1>{build.name}</h1>
+    {build.tagline && <p class="build-log-tagline">{build.tagline}</p>}
+    <div class="build-log-meta">
+      <StatusBadge status={build.status} />
+      <FreshnessDot lastUpdated={build.lastUpdated} />
+    </div>
+  </header>
+
+  <!-- Stack -->
+  {build.stack && build.stack.length > 0 && (
+    <details class="collapsible" open>
+      <summary>{t('buildLog.stack')}</summary>
+      <div class="collapsible-content">
+        <div class="build-log-tags">
+          {build.stack.map(tech => (
+            <StackTag slug={tech.slug} displayName={tech.displayName} />
+          ))}
+        </div>
+      </div>
+    </details>
+  )}
+
+  <!-- Infrastructure -->
+  {build.infrastructure && (
+    <details class="collapsible" open>
+      <summary>{t('buildLog.infrastructure')}</summary>
+      <div class="collapsible-content">
+        <dl class="build-log-dl">
+          {build.infrastructure.hosting && (
+            <>
+              <dt>Hosting</dt>
+              <dd>{build.infrastructure.hosting}</dd>
+            </>
+          )}
+          {build.infrastructure.database && (
+            <>
+              <dt>Database</dt>
+              <dd>{build.infrastructure.database}</dd>
+            </>
+          )}
+          {build.infrastructure.cdn && (
+            <>
+              <dt>CDN</dt>
+              <dd>{build.infrastructure.cdn}</dd>
+            </>
+          )}
+          {build.infrastructure.cicd && (
+            <>
+              <dt>CI/CD</dt>
+              <dd>{build.infrastructure.cicd}</dd>
+            </>
+          )}
+          {build.infrastructure.monitoring && (
+            <>
+              <dt>Monitoring</dt>
+              <dd>{build.infrastructure.monitoring}</dd>
+            </>
+          )}
+        </dl>
+      </div>
+    </details>
+  )}
+
+  <!-- AI Tools -->
+  {build.aiTools && build.aiTools.length > 0 && (
+    <details class="collapsible">
+      <summary>{t('buildLog.aiTools')}</summary>
+      <div class="collapsible-content">
+        <ul class="build-log-ai-list">
+          {build.aiTools.map(tool => (
+            <li class="build-log-ai-item">
+              <strong>{tool.name}</strong>
+              {tool.model && <span class="font-mono text-muted"> ({tool.model})</span>}
+              {tool.usage && <p class="text-secondary">{tool.usage}</p>}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </details>
+  )}
+
+  <!-- What Works -->
+  {build.whatWorks && (
+    <details class="collapsible" open>
+      <summary class="section-works">{t('buildLog.whatWorks')}</summary>
+      <div class="collapsible-content section-works-content">
+        <p>{build.whatWorks}</p>
+      </div>
+    </details>
+  )}
+
+  <!-- What Broke -->
+  {build.whatBroke && (
+    <details class="collapsible">
+      <summary class="section-broke">{t('buildLog.whatBroke')}</summary>
+      <div class="collapsible-content section-broke-content">
+        <p>{build.whatBroke}</p>
+      </div>
+    </details>
+  )}
+
+  <!-- What I'd Change -->
+  {build.whatIdChange && (
+    <details class="collapsible">
+      <summary class="section-change">{t('buildLog.whatIdChange')}</summary>
+      <div class="collapsible-content section-change-content">
+        <p>{build.whatIdChange}</p>
+      </div>
+    </details>
+  )}
+
+  <!-- Build Updates Timeline -->
+  {build.updates && build.updates.length > 0 && (
+    <section class="build-log-timeline" aria-label="Build updates timeline">
+      <h2>Updates</h2>
+      <div class="timeline">
+        {build.updates.map(entry => (
+          <div class={`update-entry update-${entry.type}`}>
+            <div class="update-header">
+              <span class="update-type font-mono">{updateTypeLabels[entry.type] || entry.type}</span>
+              <time class="update-date text-muted" datetime={entry.date}>
+                {new Date(entry.date).toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' })}
+              </time>
+            </div>
+            <h4 class="update-title">{entry.title}</h4>
+            <p class="update-body">{entry.body}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  )}
+</article>
+
+<style>
+  .build-log-header {
+    margin-bottom: var(--space-8);
+  }
+
+  .build-log-tagline {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-lg);
+    margin-top: var(--space-2);
+  }
+
+  .build-log-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+  }
+
+  .build-log-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .build-log-dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-2) var(--space-6);
+  }
+
+  .build-log-dl dt {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+  }
+
+  .build-log-dl dd {
+    font-size: var(--font-size-sm);
+  }
+
+  .build-log-ai-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .build-log-ai-item {
+    font-size: var(--font-size-sm);
+  }
+
+  .section-works {
+    color: var(--color-accent-green);
+  }
+
+  .section-works-content {
+    border-left: 3px solid var(--color-accent-green);
+  }
+
+  .section-broke {
+    color: var(--color-accent-red);
+  }
+
+  .section-broke-content {
+    border-left: 3px solid var(--color-accent-red);
+  }
+
+  .section-change {
+    color: var(--color-accent-yellow);
+  }
+
+  .section-change-content {
+    border-left: 3px solid var(--color-accent-yellow);
+  }
+
+  .build-log-timeline {
+    margin-top: var(--space-10);
+    padding-top: var(--space-8);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .build-log-timeline h2 {
+    margin-bottom: var(--space-6);
+  }
+
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .update-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-1);
+  }
+
+  .update-type {
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .update-date {
+    font-size: var(--font-size-xs);
+  }
+
+  .update-title {
+    font-size: var(--font-size-md);
+    margin-bottom: var(--space-1);
+  }
+
+  .update-body {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+  }
+</style>

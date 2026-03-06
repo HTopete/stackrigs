@@ -1,0 +1,41 @@
+# Environment
+.env
+.env.local
+.env.production
+
+# Database
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# Backups
+backups/
+
+# Go
+/stackrigs
+*.exe
+*.test
+*.out
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.astro/
+
+# Docker
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log

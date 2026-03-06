@@ -1,0 +1,25 @@
+---
+import { detectLocaleFromPath, useTranslations, localePath, stripLocale } from '../i18n/index';
+
+const locale = detectLocaleFromPath(Astro.url.pathname);
+const t = useTranslations(locale);
+const altLocale = locale === 'en' ? 'es' : 'en';
+const altPath = localePath(altLocale, stripLocale(Astro.url.pathname));
+const altLabel = altLocale === 'en' ? 'EN' : 'ES';
+const year = new Date().getFullYear();
+---
+
+<footer class="footer" role="contentinfo">
+  <div class="container footer-inner">
+    <p>{t('footer.builtWith')} Running on a Raspberry Pi 5 in Mazatlan.</p>
+
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="https://github.com/stackrigs" class="footer-link" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <a href="/api/docs" class="footer-link">API Docs</a>
+      <a href={localePath(locale, '/about')} class="footer-link">{t('nav.about')}</a>
+      <a href={altPath} class="footer-link locale-toggle">{altLabel}</a>
+    </nav>
+
+    <small>&copy; {year} StackRigs</small>
+  </div>
+</footer>

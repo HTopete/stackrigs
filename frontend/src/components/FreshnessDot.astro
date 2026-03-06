@@ -1,0 +1,56 @@
+---
+import { detectLocaleFromPath, useTranslations } from '../i18n/index';
+
+interface Props {
+  lastUpdated: string;
+}
+
+const { lastUpdated } = Astro.props;
+const locale = detectLocaleFromPath(Astro.url.pathname);
+const t = useTranslations(locale);
+
+const now = new Date();
+const updated = new Date(lastUpdated);
+const diffMs = now.getTime() - updated.getTime();
+const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+let freshnessClass: string;
+let freshnessLabel: string;
+
+if (diffDays < 30) {
+  freshnessClass = 'freshness-active';
+  freshnessLabel = t('freshness.active');
+} else if (diffDays < 90) {
+  freshnessClass = 'freshness-semi-active';
+  freshnessLabel = t('freshness.semiActive');
+} else {
+  freshnessClass = 'freshness-archived';
+  freshnessLabel = t('freshness.archived');
+}
+
+const tooltipText = `${t('common.updated')} ${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
+---
+
+<span
+  class="freshness-indicator"
+  title={tooltipText}
+  aria-label={`${freshnessLabel}: ${tooltipText}`}
+>
+  <span class={`freshness-dot ${freshnessClass}`} aria-hidden="true"></span>
+  <span class="freshness-label">{freshnessLabel}</span>
+</span>
+
+<style>
+  .freshness-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    cursor: default;
+  }
+
+  .freshness-label {
+    font-family: var(--font-mono);
+  }
+</style>
