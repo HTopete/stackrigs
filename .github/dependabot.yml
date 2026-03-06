@@ -1,0 +1,66 @@
+# Dependabot — Automated dependency updates for Go and npm.
+# PRs are created against main and validated by the CI workflow before merge.
+# For a solo developer, Dependabot is the pragmatic choice: zero setup, built
+# into GitHub, covers both ecosystems. Renovate is better for monorepos and
+# multi-platform setups, but adds complexity that isn't needed here.
+
+version: 2
+
+updates:
+  # --- Go modules ---
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/Mazatlan
+    open-pull-requests-limit: 5
+    reviewers: []
+    labels:
+      - dependencies
+      - go
+    commit-message:
+      prefix: "deps(go):"
+    # Group minor + patch updates to reduce PR noise
+    groups:
+      go-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  # --- npm (frontend) ---
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/Mazatlan
+    open-pull-requests-limit: 5
+    reviewers: []
+    labels:
+      - dependencies
+      - frontend
+    commit-message:
+      prefix: "deps(npm):"
+    groups:
+      npm-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  # --- GitHub Actions ---
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/Mazatlan
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: "deps(actions):"
