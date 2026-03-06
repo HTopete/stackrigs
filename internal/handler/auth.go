@@ -214,7 +214,7 @@ func (h *AuthHandler) BeginLogin(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		challengeKey := base64.RawURLEncoding.EncodeToString(session.Challenge)
+		challengeKey := base64.RawURLEncoding.EncodeToString([]byte(session.Challenge))
 		h.loginSessions[challengeKey] = session
 
 		writeJSON(w, http.StatusOK, map[string]interface{}{
