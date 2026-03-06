@@ -16,6 +16,14 @@ HEALTH_URL="http://localhost:8080/health"
 HEALTH_RETRIES=10
 HEALTH_INTERVAL=3
 COMPOSE_FILE="$PROJECT_DIR/docker-compose.yml"
+COMPOSE_PROD="$PROJECT_DIR/docker-compose.prod.yml"
+
+# Use prod override if it exists (GHCR image instead of local build)
+if [[ -f "$COMPOSE_PROD" ]]; then
+  COMPOSE_CMD="docker compose -f $COMPOSE_FILE -f $COMPOSE_PROD"
+else
+  COMPOSE_CMD="docker compose -f $COMPOSE_FILE"
+fi
 
 ###############################################################################
 # Helpers
@@ -62,7 +70,7 @@ fi
 ###############################################################################
 # Step 2: Save current image ID for rollback
 ###############################################################################
-PREV_IMAGE="$(docker compose -f "$COMPOSE_FILE" images -q stackrigs 2>/dev/null || true)"
+PREV_IMAGE="$($COMPOSE_CMD images -q stackrigs 2>/dev/null || true)"
 log "Step 2: Previous image: ${PREV_IMAGE:-none}"
 
 ###############################################################################
@@ -75,13 +83,13 @@ git pull --ff-only || die "git pull failed — resolve conflicts manually"
 # Step 4: Build
 ###############################################################################
 log "Step 4: Building Docker image"
-docker compose -f "$COMPOSE_FILE" build --no-cache || die "docker compose build failed"
+$COMPOSE_CMD build --no-cache || die "docker compose build failed"
 
 ###############################################################################
 # Step 5: Deploy
 ###############################################################################
 log "Step 5: Starting services"
-docker compose -f "$COMPOSE_FILE" up -d || die "docker compose up failed"
+$COMPOSE_CMD up -d || die "docker compose up failed"
 
 ###############################################################################
 # Step 6: Post-deploy health check
@@ -100,9 +108,9 @@ log "Health check failed — initiating rollback"
 
 if [[ -n "${PREV_IMAGE:-}" ]]; then
   log "Rolling back to image: $PREV_IMAGE"
-  docker compose -f "$COMPOSE_FILE" down
+  $COMPOSE_CMD down
   docker tag "$PREV_IMAGE" stackrigs:rollback 2>/dev/null || true
-  docker compose -f "$COMPOSE_FILE" up -d
+  $COMPOSE_CMD up -d
   if health_check; then
     log "Rollback successful"
   else
