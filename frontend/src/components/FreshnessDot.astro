@@ -28,7 +28,7 @@ if (diffDays < 30) {
   freshnessLabel = t('freshness.archived');
 }
 
-const tooltipText = `${t('common.updated')} ${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
+const tooltipText = `${t('common.updated')} ${diffDays} ${diffDays === 1 ? t('common.dayAgo') : t('common.daysAgo')}`;
 ---
 
 <span

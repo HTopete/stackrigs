@@ -1,10 +1,12 @@
 ---
 import Page from '../layouts/Page.astro';
 import SearchIsland from '../islands/SearchIsland';
-import { detectLocaleFromPath, useTranslations } from '../i18n/index';
+import { detectLocaleFromPath, useTranslations, localePath } from '../i18n/index';
 
 const locale = detectLocaleFromPath(Astro.url.pathname);
 const t = useTranslations(locale);
+
+const suggestedSearches = ['React', 'Go', 'SQLite', 'Rust', 'Astro', 'Docker'];
 ---
 
 <Page
@@ -26,6 +28,17 @@ const t = useTranslations(locale);
         loadingText={t('common.loading')}
       />
     </div>
+
+    <div class="search-suggestions">
+      <p class="search-suggestions-label font-mono">Popular</p>
+      <div class="search-suggestions-list">
+        {suggestedSearches.map(term => (
+          <a href={localePath(locale, `/stack/${term.toLowerCase()}`)} class="tag" data-astro-prefetch>
+            {term}
+          </a>
+        ))}
+      </div>
+    </div>
   </section>
 </Page>
 
@@ -42,6 +55,26 @@ const t = useTranslations(locale);
   .search-page > p {
     text-align: center;
     margin-inline: auto;
+  }
+
+  .search-suggestions {
+    margin-top: var(--space-10);
+    text-align: center;
+  }
+
+  .search-suggestions-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-4);
+  }
+
+  .search-suggestions-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2);
   }
 
   /* Island styles for search results */

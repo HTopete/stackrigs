@@ -51,6 +51,8 @@
     "showMore": "Show more",
     "showLess": "Show less",
     "updated": "Updated",
+    "daysAgo": "days ago",
+    "dayAgo": "day ago",
     "created": "Created",
     "views": "views",
     "noResults": "No results",
@@ -66,7 +68,7 @@
     "copyEmbedCode": "Copy embed code"
   },
   "footer": {
-    "builtWith": "Built with Go + Astro + SQLite. Running on a Raspberry Pi 5."
+    "builtWith": "Built with Go + Astro + SQLite. Running on a Raspberry Pi 5 in Mazatlan."
   },
   "hero": {
     "title": "An open index of what builders are actually building.",

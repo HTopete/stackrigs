@@ -51,6 +51,8 @@
     "showMore": "Ver mas",
     "showLess": "Ver menos",
     "updated": "Actualizado",
+    "daysAgo": "dias atras",
+    "dayAgo": "dia atras",
     "created": "Creado",
     "views": "vistas",
     "noResults": "Sin resultados",
@@ -66,7 +68,7 @@
     "copyEmbedCode": "Copiar codigo embed"
   },
   "footer": {
-    "builtWith": "Hecho con Go + Astro + SQLite. Corriendo en una Raspberry Pi 5."
+    "builtWith": "Hecho con Go + Astro + SQLite. Corriendo en una Raspberry Pi 5 en Mazatlan."
   },
   "hero": {
     "title": "Un indice abierto de lo que los developers realmente construyen.",
