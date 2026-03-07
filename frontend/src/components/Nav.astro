@@ -1,5 +1,6 @@
 ---
 import { detectLocaleFromPath, useTranslations, localePath, stripLocale } from '../i18n/index';
+import AuthIsland from '../islands/AuthIsland.tsx';
 
 const locale = detectLocaleFromPath(Astro.url.pathname);
 const t = useTranslations(locale);
@@ -34,9 +35,14 @@ const navLinks = [
       <a href={altPath} class="locale-toggle" aria-label={`Switch to ${altLabel}`}>
         {altLabel}
       </a>
-      <a href={localePath(locale, '/signin')} class="btn btn-primary btn-sm">
-        {t('nav.signIn')}
-      </a>
+      <AuthIsland
+        client:load
+        locale={locale}
+        signInText={t('nav.signIn')}
+        signOutText={t('nav.signOut')}
+        myProfileText={t('nav.myProfile')}
+        signInHref={localePath(locale, '/signin')}
+      />
       <button
         class="hamburger"
         aria-label="Toggle menu"
@@ -56,9 +62,14 @@ const navLinks = [
       <a href={link.href}>{link.label}</a>
     ))}
     <a href={altPath} class="locale-toggle">{altLabel}</a>
-    <a href={localePath(locale, '/signin')} class="btn btn-primary">
-      {t('nav.signIn')}
-    </a>
+    <AuthIsland
+      client:load
+      locale={locale}
+      signInText={t('nav.signIn')}
+      signOutText={t('nav.signOut')}
+      myProfileText={t('nav.myProfile')}
+      signInHref={localePath(locale, '/signin')}
+    />
   </div>
 </nav>
 

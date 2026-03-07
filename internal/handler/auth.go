@@ -501,7 +501,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	http.SetCookie(w, &http.Cookie{
+	cookie := &http.Cookie{
 		Name:     sessionCookieName,
 		Value:    "",
 		Path:     "/",
@@ -509,7 +509,11 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 		Secure:   h.cfg.IsProd(),
-	})
+	}
+	if h.cfg.CookieDomain != "" {
+		cookie.Domain = h.cfg.CookieDomain
+	}
+	http.SetCookie(w, cookie)
 
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
@@ -569,7 +573,7 @@ func (h *AuthHandler) loadCredentials(builderID int64) ([]webauthn.Credential, e
 }
 
 func (h *AuthHandler) setSessionCookie(w http.ResponseWriter, sessionID string) {
-	http.SetCookie(w, &http.Cookie{
+	cookie := &http.Cookie{
 		Name:     sessionCookieName,
 		Value:    sessionID,
 		Path:     "/",
@@ -577,7 +581,11 @@ func (h *AuthHandler) setSessionCookie(w http.ResponseWriter, sessionID string) 
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 		Secure:   h.cfg.IsProd(),
-	})
+	}
+	if h.cfg.CookieDomain != "" {
+		cookie.Domain = h.cfg.CookieDomain
+	}
+	http.SetCookie(w, cookie)
 }
 
 func generateOAuthState() (string, error) {
