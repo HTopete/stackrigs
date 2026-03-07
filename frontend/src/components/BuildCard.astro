@@ -25,47 +25,62 @@ const t = useTranslations(locale);
 const buildUrl = localePath(locale, `/build/${build.id}`);
 ---
 
-<a href={buildUrl} class="card build-card" data-astro-prefetch>
-  <div class="card-content">
-    <div class="card-main">
-      <div class="card-meta">
-        <StatusBadge status={build.status} />
-        <FreshnessDot lastUpdated={build.lastUpdated} />
-      </div>
+<article class="card build-card">
+  <div class="card-meta">
+    <StatusBadge status={build.status} />
+    <FreshnessDot lastUpdated={build.lastUpdated} />
+  </div>
 
-      <h3 class="build-card-title">{build.name}</h3>
+  <h3 class="build-card-title">
+    <a href={buildUrl} class="build-card-link" data-astro-prefetch>{build.name}</a>
+  </h3>
 
-      {build.tagline && (
-        <p class="build-card-tagline">{build.tagline}</p>
-      )}
+  {build.tagline && (
+    <p class="build-card-tagline">{build.tagline}</p>
+  )}
 
-      {build.stack && build.stack.length > 0 && (
-        <div class="build-card-tags">
-          {build.stack.slice(0, 5).map(tech => (
-            <StackTag slug={tech.slug} displayName={tech.displayName} />
-          ))}
-          {build.stack.length > 5 && (
-            <span class="tag text-muted">+{build.stack.length - 5}</span>
-          )}
-        </div>
-      )}
-
-      {build.whatWorks && (
-        <div class="build-card-works">
-          <span class="build-card-works-label text-accent-green" aria-hidden="true">&#10003;</span>
-          <span class="line-clamp-3">{build.whatWorks}</span>
-        </div>
+  {build.stack && build.stack.length > 0 && (
+    <div class="build-card-tags">
+      {build.stack.slice(0, 5).map(tech => (
+        <StackTag slug={tech.slug} displayName={tech.displayName} />
+      ))}
+      {build.stack.length > 5 && (
+        <span class="tag text-muted">+{build.stack.length - 5}</span>
       )}
     </div>
-  </div>
-</a>
+  )}
+
+  {build.whatWorks && (
+    <div class="build-card-works">
+      <span class="build-card-works-label text-accent-green" aria-hidden="true">&#10003;</span>
+      <span class="line-clamp-3">{build.whatWorks}</span>
+    </div>
+  )}
+</article>
 
 <style>
   .build-card {
-    display: block;
+    position: relative;
+    container-type: inline-size;
+  }
+
+  /* Stretched link: title <a> covers the whole card */
+  .build-card-link {
     text-decoration: none;
     color: inherit;
-    container-type: inline-size;
+  }
+
+  .build-card-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  /* Stack tags sit above the stretched link so they're independently clickable */
+  .build-card-tags {
+    position: relative;
+    z-index: 2;
   }
 
   .card-meta {
@@ -114,14 +129,6 @@ const buildUrl = localePath(locale, `/build/${build.id}`);
       flex-direction: column;
       align-items: flex-start;
       gap: var(--space-1);
-    }
-  }
-
-  @container (min-width: 400px) {
-    .card-content {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: var(--space-4);
     }
   }
 </style>
