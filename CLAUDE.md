@@ -97,7 +97,7 @@ GET    /api/auth/me                   # Current builder
 GET    /api/builders/:handle          # Builder profile
 POST   /api/builders                  # Create builder (requires invite)
 
-GET    /api/builds                    # List builds (?tech=&status=&sort=)
+GET    /api/builds                    # List builds (?tech=&status=&sort=&builder=)
 GET    /api/builds/:id                # Build detail + updates
 POST   /api/builds                    # Create build (auth required)
 PUT    /api/builds/:id                # Update build (owner only)

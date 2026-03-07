@@ -7,48 +7,13 @@ import Page from '../../layouts/Page.astro';
 import BuildCard from '../../components/BuildCard.astro';
 import StackTag from '../../components/StackTag.astro';
 import { detectLocaleFromPath, useTranslations, localePath } from '../../i18n/index';
+import { getBuilds, getTechnologies } from '../../lib/api';
 
 const locale = detectLocaleFromPath(Astro.url.pathname);
 const t = useTranslations(locale);
 
-// Mock data -- same as English; in production fetched from API
-const recentBuilds = [
-  {
-    id: '1', name: 'StackRigs', tagline: 'An open index of what developers build',
-    status: 'building' as const,
-    stack: [{ slug: 'go', displayName: 'Go' }, { slug: 'astro', displayName: 'Astro' }, { slug: 'sqlite', displayName: 'SQLite' }],
-    whatWorks: 'SQLite on a Pi 5 handles 500+ req/s without breaking a sweat.',
-    lastUpdated: '2026-03-01',
-  },
-  {
-    id: '2', name: 'DataForge', tagline: 'ETL pipelines for small teams',
-    status: 'launched' as const,
-    stack: [{ slug: 'python', displayName: 'Python' }, { slug: 'postgresql', displayName: 'PostgreSQL' }],
-    whatWorks: 'PostgreSQL logical replication is rock solid for CDC.',
-    lastUpdated: '2026-02-15',
-  },
-  {
-    id: '3', name: 'Noteship', tagline: 'Offline-first notes with sync',
-    status: 'building' as const,
-    stack: [{ slug: 'react', displayName: 'React' }, { slug: 'crdts', displayName: 'CRDTs' }],
-    lastUpdated: '2026-02-28',
-  },
-];
-
-const popularStacks = [
-  { slug: 'react', displayName: 'React', count: 142 },
-  { slug: 'nextjs', displayName: 'Next.js', count: 98 },
-  { slug: 'typescript', displayName: 'TypeScript', count: 87 },
-  { slug: 'postgresql', displayName: 'PostgreSQL', count: 76 },
-  { slug: 'docker', displayName: 'Docker', count: 71 },
-  { slug: 'go', displayName: 'Go', count: 65 },
-  { slug: 'tailwind', displayName: 'Tailwind', count: 59 },
-  { slug: 'python', displayName: 'Python', count: 54 },
-  { slug: 'redis', displayName: 'Redis', count: 48 },
-  { slug: 'sqlite', displayName: 'SQLite', count: 42 },
-  { slug: 'rust', displayName: 'Rust', count: 38 },
-  { slug: 'astro', displayName: 'Astro', count: 31 },
-];
+const { builds: recentBuilds } = await getBuilds({ limit: 6, sort: 'updated' });
+const popularStacks = await getTechnologies();
 ---
 
 <Page

@@ -2,21 +2,14 @@
 import Page from '../../layouts/Page.astro';
 import BuildCard from '../../components/BuildCard.astro';
 import { detectLocaleFromPath, useTranslations } from '../../i18n/index';
+import { getBuilds, getTechnologies } from '../../lib/api';
 
 const locale = detectLocaleFromPath(Astro.url.pathname);
 const t = useTranslations(locale);
 
-const builds = [
-  {
-    id: '1', name: 'StackRigs', tagline: 'An open index of what developers build',
-    status: 'building' as const,
-    stack: [{ slug: 'go', displayName: 'Go' }, { slug: 'astro', displayName: 'Astro' }],
-    whatWorks: 'SQLite on a Pi 5 handles 500+ req/s.',
-    lastUpdated: '2026-03-01',
-  },
-];
-
-const technologies = ['Go', 'React', 'Python', 'Rust', 'TypeScript', 'Astro'];
+const { builds } = await getBuilds({ limit: 20, sort: 'updated' });
+const techs = await getTechnologies();
+const technologies = techs.map(t => t.displayName);
 const statuses = ['building', 'launched', 'paused', 'abandoned'];
 ---
 

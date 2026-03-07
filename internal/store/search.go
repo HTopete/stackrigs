@@ -276,7 +276,8 @@ func (s *SearchStore) searchBuildsFTS(ftsQuery, rawQuery string) ([]model.Build,
 	}
 
 	rows, err := s.db.Query(
-		`SELECT b.id, b.builder_id, b.name, b.description, b.status, b.repo_url, b.live_url, b.cover_image, b.created_at, b.updated_at,
+		`SELECT b.id, b.builder_id, b.name, b.description, b.status, b.repo_url, b.live_url, b.cover_image,
+		        b.what_works, b.what_broke, b.what_id_change, b.created_at, b.updated_at,
 		        bu.id, bu.handle, bu.display_name, bu.avatar_url
 		 FROM search_index si
 		 JOIN builds b ON CAST(si.entity_id AS INTEGER) = b.id
@@ -295,7 +296,8 @@ func (s *SearchStore) searchBuildsFTS(ftsQuery, rawQuery string) ([]model.Build,
 		var b model.Build
 		var builder model.Builder
 		if err := rows.Scan(
-			&b.ID, &b.BuilderID, &b.Name, &b.Description, &b.Status, &b.RepoURL, &b.LiveURL, &b.CoverImage, &b.CreatedAt, &b.UpdatedAt,
+			&b.ID, &b.BuilderID, &b.Name, &b.Description, &b.Status, &b.RepoURL, &b.LiveURL, &b.CoverImage,
+			&b.WhatWorks, &b.WhatBroke, &b.WhatIdChange, &b.CreatedAt, &b.UpdatedAt,
 			&builder.ID, &builder.Handle, &builder.DisplayName, &builder.AvatarURL,
 		); err != nil {
 			return nil, fmt.Errorf("scanning build: %w", err)
@@ -314,7 +316,8 @@ func (s *SearchStore) searchBuildsFTS(ftsQuery, rawQuery string) ([]model.Build,
 func (s *SearchStore) searchBuildsLike(query string) ([]model.Build, error) {
 	pattern := "%" + query + "%"
 	rows, err := s.db.Query(
-		`SELECT b.id, b.builder_id, b.name, b.description, b.status, b.repo_url, b.live_url, b.cover_image, b.created_at, b.updated_at,
+		`SELECT b.id, b.builder_id, b.name, b.description, b.status, b.repo_url, b.live_url, b.cover_image,
+		        b.what_works, b.what_broke, b.what_id_change, b.created_at, b.updated_at,
 		        bu.id, bu.handle, bu.display_name, bu.avatar_url
 		 FROM builds b
 		 JOIN builders bu ON b.builder_id = bu.id
@@ -333,7 +336,8 @@ func (s *SearchStore) searchBuildsLike(query string) ([]model.Build, error) {
 		var b model.Build
 		var builder model.Builder
 		if err := rows.Scan(
-			&b.ID, &b.BuilderID, &b.Name, &b.Description, &b.Status, &b.RepoURL, &b.LiveURL, &b.CoverImage, &b.CreatedAt, &b.UpdatedAt,
+			&b.ID, &b.BuilderID, &b.Name, &b.Description, &b.Status, &b.RepoURL, &b.LiveURL, &b.CoverImage,
+			&b.WhatWorks, &b.WhatBroke, &b.WhatIdChange, &b.CreatedAt, &b.UpdatedAt,
 			&builder.ID, &builder.Handle, &builder.DisplayName, &builder.AvatarURL,
 		); err != nil {
 			return nil, fmt.Errorf("scanning build: %w", err)

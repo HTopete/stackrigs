@@ -2,73 +2,21 @@
 import Page from '../layouts/Page.astro';
 import BuildCard from '../components/BuildCard.astro';
 import FreshnessDot from '../components/FreshnessDot.astro';
-import SetupGallery from '../components/SetupGallery.astro';
 import { detectLocaleFromPath, useTranslations } from '../i18n/index';
+import { getBuilder, getBuilds, getAllBuilderHandles } from '../lib/api';
 
 const { handle } = Astro.params;
 const locale = detectLocaleFromPath(Astro.url.pathname);
 const t = useTranslations(locale);
 
-// Mock data — replace with API call using `handle`
-const builder = {
-  handle: handle || 'unknown',
-  name: 'Ana Rodriguez',
-  bio: 'Full-stack developer building tools for small teams. Based in Mexico City.',
-  avatar: '/avatars/placeholder.png',
-  memberSince: '2025-06-15',
-  lastActive: '2026-03-01',
-  links: {
-    github: 'https://github.com/anarodriguez',
-    twitter: 'https://x.com/anarodriguez',
-    website: 'https://ana.dev',
-  },
-  builds: [
-    {
-      id: '1',
-      name: 'StackRigs',
-      tagline: 'An open index of what developers build',
-      status: 'building' as const,
-      stack: [
-        { slug: 'go', displayName: 'Go' },
-        { slug: 'astro', displayName: 'Astro' },
-        { slug: 'sqlite', displayName: 'SQLite' },
-      ],
-      whatWorks: 'SQLite on a Pi 5 handles 500+ req/s.',
-      lastUpdated: '2026-03-01',
-    },
-    {
-      id: '2',
-      name: 'DataForge',
-      tagline: 'ETL pipelines for small teams',
-      status: 'launched' as const,
-      stack: [
-        { slug: 'python', displayName: 'Python' },
-        { slug: 'postgresql', displayName: 'PostgreSQL' },
-      ],
-      whatWorks: 'PostgreSQL logical replication is rock solid.',
-      lastUpdated: '2026-02-15',
-    },
-  ],
-  setupImages: [
-    {
-      src: '/setup/placeholder-1.jpg',
-      alt: 'Desk setup with dual monitors',
-      caption: 'Daily driver setup',
-    },
-    {
-      src: '/setup/placeholder-2.jpg',
-      alt: 'Raspberry Pi cluster',
-      caption: 'Home lab',
-    },
-  ],
-};
+const builder = await getBuilder(handle!);
+const { builds: builderBuilds } = await getBuilds({ builder: handle, limit: 20 });
 
-export function getStaticPaths() {
-  // In production, fetch all builder handles from API
-  return [
-    { params: { handle: 'anarodriguez' } },
-    { params: { handle: 'demo' } },
-  ];
+if (!builder) return Astro.redirect('/404');
+
+export async function getStaticPaths() {
+  const handles = await getAllBuilderHandles();
+  return handles.map(handle => ({ params: { handle } }));
 }
 ---
 
@@ -122,19 +70,14 @@ export function getStaticPaths() {
     <section aria-labelledby="builder-builds-title">
       <h2 id="builder-builds-title">{t('builder.builds')}</h2>
       <div class="grid-cards" style="margin-top: var(--space-6);">
-        {builder.builds.map(build => (
+        {builderBuilds.map(build => (
           <BuildCard build={build} />
         ))}
+        {builderBuilds.length === 0 && (
+          <p class="text-muted">{t('builder.noBuilds')}</p>
+        )}
       </div>
     </section>
-
-    <!-- Setup Gallery -->
-    {builder.setupImages && builder.setupImages.length > 0 && (
-      <section style="margin-top: var(--space-10);">
-        <h2>Setup</h2>
-        <SetupGallery images={builder.setupImages} />
-      </section>
-    )}
   </section>
 </Page>
 

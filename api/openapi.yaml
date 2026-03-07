@@ -319,7 +319,12 @@ paths:
           in: query
           schema:
             type: string
-            enum: [building, shipped, archived, paused]
+            enum: [building, launched, paused, abandoned]
+        - name: builder
+          in: query
+          schema:
+            type: string
+          description: Filter by builder handle
         - name: sort
           in: query
           schema:
@@ -709,12 +714,18 @@ components:
           type: string
         status:
           type: string
-          enum: [building, shipped, archived, paused]
+          enum: [building, launched, paused, abandoned]
         repo_url:
           type: string
         live_url:
           type: string
         cover_image:
+          type: string
+        what_works:
+          type: string
+        what_broke:
+          type: string
+        what_id_change:
           type: string
         technologies:
           type: array
@@ -743,13 +754,19 @@ components:
           type: string
         status:
           type: string
-          enum: [building, shipped, archived, paused]
+          enum: [building, launched, paused, abandoned]
           default: building
         repo_url:
           type: string
         live_url:
           type: string
         cover_image:
+          type: string
+        what_works:
+          type: string
+        what_broke:
+          type: string
+        what_id_change:
           type: string
         technologies:
           type: array
@@ -766,12 +783,18 @@ components:
           type: string
         status:
           type: string
-          enum: [building, shipped, archived, paused]
+          enum: [building, launched, paused, abandoned]
         repo_url:
           type: string
         live_url:
           type: string
         cover_image:
+          type: string
+        what_works:
+          type: string
+        what_broke:
+          type: string
+        what_id_change:
           type: string
         technologies:
           type: array
@@ -785,6 +808,12 @@ components:
           type: integer
         build_id:
           type: integer
+        type:
+          type: string
+          enum: [milestone, stack_change, infra_change, pivot, reflection, tool_change]
+          default: milestone
+        title:
+          type: string
         content:
           type: string
         created_at:

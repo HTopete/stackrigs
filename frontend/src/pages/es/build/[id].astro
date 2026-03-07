@@ -1,98 +1,20 @@
 ---
 import Page from '../../../layouts/Page.astro';
 import BuildLog from '../../../components/BuildLog.astro';
-import SetupGallery from '../../../components/SetupGallery.astro';
 import EmbedPreview from '../../../components/EmbedPreview.astro';
 import { detectLocaleFromPath, useTranslations, localePath } from '../../../i18n/index';
+import { getBuild, getAllBuildIds } from '../../../lib/api';
 
 const { id } = Astro.params;
 const locale = detectLocaleFromPath(Astro.url.pathname);
 const t = useTranslations(locale);
 
-// Mock data — replace with API call using `id`
-const build = {
-  id: id || 'unknown',
-  name: 'StackRigs',
-  tagline: 'An open index of what developers are actually building',
-  status: 'building' as const,
-  builderHandle: 'anarodriguez',
-  builderName: 'Ana Rodriguez',
-  stack: [
-    { slug: 'go', displayName: 'Go' },
-    { slug: 'astro', displayName: 'Astro' },
-    { slug: 'sqlite', displayName: 'SQLite' },
-    { slug: 'cloudflare', displayName: 'Cloudflare' },
-    { slug: 'docker', displayName: 'Docker' },
-  ],
-  infrastructure: {
-    hosting: 'Raspberry Pi 5 (self-hosted)',
-    database: 'SQLite with Litestream replication',
-    cdn: 'Cloudflare',
-    cicd: 'GitHub Actions',
-    monitoring: 'Custom Go metrics + Prometheus',
-  },
-  aiTools: [
-    {
-      name: 'Claude',
-      model: 'claude-sonnet-4-20250514',
-      usage: 'Code review, architecture decisions, writing build log entries',
-    },
-    {
-      name: 'GitHub Copilot',
-      usage: 'Inline code completion during development',
-    },
-  ],
-  whatWorks: 'SQLite on a Pi 5 handles 500+ req/s without breaking a sweat. The single-binary Go deployment means zero dependency management. Cloudflare caching + Litestream backups give us enterprise-grade reliability on a $60 computer.',
-  whatBroke: 'Initial attempt with PostgreSQL was overkill. Memory usage on the Pi was too high and the connection pool kept timing out under load. SQLite with WAL mode solved everything.',
-  whatIdChange: 'Would start with Astro from day one instead of trying a SPA first. The island architecture is perfect for a content-heavy site like this. Also would set up Litestream earlier instead of manual backups.',
-  updates: [
-    {
-      type: 'milestone' as const,
-      date: '2026-03-01',
-      title: 'First 100 builds indexed',
-      body: 'Reached the milestone of 100 build logs submitted. The community is growing organically through word of mouth.',
-    },
-    {
-      type: 'stack_change' as const,
-      date: '2026-02-15',
-      title: 'Migrated frontend to Astro 5.18',
-      body: 'Moved from the SPA prototype to Astro with islands. Page load times dropped from 2.1s to 340ms.',
-    },
-    {
-      type: 'infra_change' as const,
-      date: '2026-01-20',
-      title: 'Added Litestream for continuous backups',
-      body: 'SQLite WAL files now replicate to Cloudflare R2 every 10 seconds. Total cost: $0.',
-    },
-    {
-      type: 'pivot' as const,
-      date: '2025-12-10',
-      title: 'Dropped PostgreSQL for SQLite',
-      body: 'After weeks of fighting connection pooling on the Pi, switched to SQLite. Best decision of the project.',
-    },
-    {
-      type: 'reflection' as const,
-      date: '2025-11-01',
-      title: 'Why not just use a spreadsheet?',
-      body: 'Considered whether a Google Sheet would suffice. Decided structured data + API access + embeddable badges justified building a proper tool.',
-    },
-  ],
-  lastUpdated: '2026-03-01',
-};
+const build = await getBuild(id!);
+if (!build) return Astro.redirect('/404');
 
-const setupImages = [
-  {
-    src: '/setup/pi5-setup.jpg',
-    alt: 'Raspberry Pi 5 running StackRigs',
-    caption: 'The StackRigs server — a Raspberry Pi 5 in Mazatlan',
-  },
-];
-
-export function getStaticPaths() {
-  return [
-    { params: { id: '1' } },
-    { params: { id: 'stackrigs' } },
-  ];
+export async function getStaticPaths() {
+  const ids = await getAllBuildIds();
+  return ids.map(id => ({ params: { id } }));
 }
 ---
 
@@ -111,14 +33,6 @@ export function getStaticPaths() {
 
     <!-- Full Build Log -->
     <BuildLog build={build} />
-
-    <!-- Setup Gallery -->
-    {setupImages.length > 0 && (
-      <div style="margin-top: var(--space-10);">
-        <h2>Setup</h2>
-        <SetupGallery images={setupImages} />
-      </div>
-    )}
 
     <!-- Embed Preview -->
     <div style="margin-top: var(--space-10);">
