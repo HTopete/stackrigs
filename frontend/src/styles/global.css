@@ -890,6 +890,129 @@
   }
 
 
+  /* ── Build Form ──────────────────────────────────────── */
+
+  .build-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  .build-form-title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-2xl);
+    margin-block-end: var(--space-2);
+  }
+
+  .build-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    flex: 1;
+  }
+
+  .build-form-field label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+  }
+
+  .build-form-field input,
+  .build-form-field textarea,
+  .build-form-field select {
+    display: block;
+    inline-size: 100%;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-sm);
+    font-family: inherit;
+    color: var(--color-text);
+    background: var(--color-surface);
+    border: none;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-inset), inset 0 0 0 1px var(--color-border);
+    transition: box-shadow var(--duration-fast) var(--ease-out);
+  }
+
+  .build-form-field input::placeholder,
+  .build-form-field textarea::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  .build-form-field input:focus-visible,
+  .build-form-field textarea:focus-visible,
+  .build-form-field select:focus-visible {
+    outline: none;
+    box-shadow:
+      var(--shadow-inset),
+      inset 0 0 0 1px var(--color-accent),
+      0 0 0 3px color-mix(in srgb, var(--color-accent) 15%, transparent);
+  }
+
+  .build-form-field textarea {
+    resize: vertical;
+    min-block-size: 5rem;
+    field-sizing: content;
+  }
+
+  .build-form-field select {
+    cursor: pointer;
+  }
+
+  .build-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+  }
+
+  @media (max-width: 600px) {
+    .build-form-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .build-form-hint {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+  }
+
+  .build-form-submit {
+    align-self: flex-start;
+    padding: var(--space-3) var(--space-8);
+    font-size: var(--font-size-base);
+  }
+
+  .build-form-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .build-form-error {
+    padding: var(--space-3) var(--space-4);
+    background: color-mix(in srgb, var(--color-status-abandoned) 10%, var(--color-surface));
+    border-radius: var(--radius-sm);
+    color: var(--color-status-abandoned);
+    font-size: var(--font-size-sm);
+  }
+
+  .build-form-success {
+    padding: var(--space-3) var(--space-4);
+    background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
+    border-radius: var(--radius-sm);
+    color: var(--color-accent);
+    font-size: var(--font-size-sm);
+  }
+
+  .build-form-auth {
+    text-align: center;
+    padding: var(--space-12) var(--space-4);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-md);
+  }
+
+  .build-form-auth .btn {
+    margin-top: var(--space-4);
+  }
+
   /* ── Dialog / Lightbox ─────────────────────────────────── */
 
   .dialog {

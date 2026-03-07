@@ -1,0 +1,61 @@
+---
+import Page from '../../layouts/Page.astro';
+import BuildFormIsland from '../../islands/BuildFormIsland.tsx';
+import { detectLocaleFromPath, useTranslations } from '../../i18n/index';
+
+const locale = detectLocaleFromPath(Astro.url.pathname);
+const t = useTranslations(locale);
+---
+
+<Page
+  title="Nuevo Build — StackRigs"
+  description="Crea un nuevo build log en StackRigs."
+>
+  <section class="page-section" style="max-width: 720px; margin: 0 auto;">
+    <BuildFormIsland
+      client:load
+      mode="create"
+      locale={locale}
+      labels={{
+        createTitle: t('buildForm.createTitle'),
+        editTitle: t('buildForm.editTitle'),
+        name: t('buildForm.name'),
+        namePlaceholder: t('buildForm.namePlaceholder'),
+        description: t('buildForm.description'),
+        descriptionPlaceholder: t('buildForm.descriptionPlaceholder'),
+        status: t('buildForm.status'),
+        repoUrl: t('buildForm.repoUrl'),
+        repoUrlPlaceholder: t('buildForm.repoUrlPlaceholder'),
+        liveUrl: t('buildForm.liveUrl'),
+        liveUrlPlaceholder: t('buildForm.liveUrlPlaceholder'),
+        technologies: t('buildForm.technologies'),
+        technologiesPlaceholder: t('buildForm.technologiesPlaceholder'),
+        technologiesHint: t('buildForm.technologiesHint'),
+        whatWorks: t('buildForm.whatWorks'),
+        whatWorksPlaceholder: t('buildForm.whatWorksPlaceholder'),
+        whatBroke: t('buildForm.whatBroke'),
+        whatBrokePlaceholder: t('buildForm.whatBrokePlaceholder'),
+        whatIdChange: t('buildForm.whatIdChange'),
+        whatIdChangePlaceholder: t('buildForm.whatIdChangePlaceholder'),
+        submit: t('buildForm.submit'),
+        submitEdit: t('buildForm.submitEdit'),
+        saving: t('buildForm.saving'),
+        loginRequired: t('buildForm.loginRequired'),
+        success: t('buildForm.success'),
+        error: t('buildForm.error'),
+      }}
+      statusLabels={{
+        building: t('buildLog.status.building'),
+        launched: t('buildLog.status.launched'),
+        paused: t('buildLog.status.paused'),
+        abandoned: t('buildLog.status.abandoned'),
+      }}
+    />
+  </section>
+</Page>
+
+<style>
+  .page-section {
+    padding-block: var(--space-8);
+  }
+</style>
