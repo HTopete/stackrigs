@@ -4,6 +4,7 @@ import { detectLocaleFromPath, useTranslations } from '../../i18n/index';
 
 const locale = detectLocaleFromPath(Astro.url.pathname);
 const t = useTranslations(locale);
+const API_BASE = import.meta.env.PUBLIC_API_URL || '';
 ---
 
 <Page
@@ -29,7 +30,7 @@ const t = useTranslations(locale);
         </button>
 
         <a
-          href="/api/auth/github"
+          href={`${API_BASE}/api/auth/github`}
           class="btn btn-secondary signin-btn"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

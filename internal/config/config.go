@@ -27,6 +27,11 @@ type Config struct {
 
 	// Base URL for badge generation and redirects
 	BaseURL string
+
+	// CookieDomain sets the Domain attribute on session cookies.
+	// Use ".stackrigs.com" in production so cookies are shared
+	// between stackrigs.com (frontend) and api.stackrigs.com (API).
+	CookieDomain string
 }
 
 func Load() *Config {
@@ -48,6 +53,8 @@ func Load() *Config {
 		SessionMaxAge: 86400 * 7, // 7 days
 
 		BaseURL: getEnv("BASE_URL", "http://localhost:8080"),
+
+		CookieDomain: getEnv("COOKIE_DOMAIN", ""),
 	}
 	return cfg
 }

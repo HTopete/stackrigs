@@ -661,6 +661,75 @@
     border-block-end: 1px solid var(--color-border);
   }
 
+  /* ── Auth menu (AuthIsland) ────────────────────────────── */
+
+  .auth-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: box-shadow var(--duration-fast) var(--ease-out);
+  }
+
+  .auth-trigger:hover {
+    box-shadow: 0 0 0 2px var(--color-accent);
+  }
+
+  .auth-dropdown {
+    position: absolute;
+    top: calc(100% + var(--space-2));
+    right: 0;
+    min-inline-size: 180px;
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg, 0 8px 24px rgb(0 0 0 / 0.12));
+    z-index: var(--z-dropdown, 50);
+    overflow: hidden;
+    animation: fade-in var(--duration-fast) var(--ease-out);
+  }
+
+  .auth-dropdown-header {
+    padding: var(--space-3) var(--space-4);
+    border-block-end: 1px solid var(--color-border);
+  }
+
+  .auth-dropdown-name {
+    display: block;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+  }
+
+  .auth-dropdown-handle {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+  }
+
+  .auth-dropdown-item {
+    display: block;
+    width: 100%;
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    text-align: left;
+    cursor: pointer;
+    transition: background-color var(--duration-fast) var(--ease-out);
+  }
+
+  .auth-dropdown-item:hover {
+    background: var(--color-bg);
+    color: var(--color-text);
+  }
+
+  .auth-dropdown-logout {
+    border-block-start: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+  }
+
   /* Responsive nav — container queries not viable for viewport nav */
   @media (max-width: 768px) {
     .nav-links,

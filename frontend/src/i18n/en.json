@@ -5,7 +5,9 @@
     "search": "Search",
     "about": "About",
     "infra": "Infra",
-    "signIn": "Sign In"
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "myProfile": "My Profile"
   },
   "buildLog": {
     "stack": "Stack",
