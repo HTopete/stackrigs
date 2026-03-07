@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -165,7 +166,7 @@ func (s *AuthStore) UpdateCredentialSignCount(credentialID string, newCount uint
 // FindOrCreateBuilderByGitHub finds an existing builder by GitHub ID or creates a new one.
 // If the builder already exists, it updates the access token and avatar.
 // Returns the builder ID and whether a new builder was created.
-func (s *AuthStore) FindOrCreateBuilderByGitHub(githubID int64, username, avatarURL, accessToken string) (int64, bool, error) {
+func (s *AuthStore) FindOrCreateBuilderByGitHub(githubID int64, username, displayName, avatarURL, accessToken string) (int64, bool, error) {
 	// Check if a GitHub connection exists
 	var builderID int64
 	err := s.db.QueryRow(
@@ -197,7 +198,7 @@ func (s *AuthStore) FindOrCreateBuilderByGitHub(githubID int64, username, avatar
 
 	// No connection found — create a new builder
 	now := time.Now().UTC()
-	handle := fmt.Sprintf("gh-%s", username)
+	handle := strings.ToLower(username)
 
 	// Ensure handle is unique by appending random suffix if needed
 	var existing int
@@ -205,13 +206,13 @@ func (s *AuthStore) FindOrCreateBuilderByGitHub(githubID int64, username, avatar
 	if existing > 0 {
 		suffix := make([]byte, 3)
 		_, _ = rand.Read(suffix)
-		handle = fmt.Sprintf("gh-%s-%s", username, hex.EncodeToString(suffix))
+		handle = fmt.Sprintf("%s-%s", handle, hex.EncodeToString(suffix))
 	}
 
 	result, err := s.db.Exec(
 		`INSERT INTO builders (handle, display_name, bio, avatar_url, website, github_url, twitter_url, invitation_code, created_at, updated_at)
 		 VALUES (?, ?, '', ?, '', ?, '', 'github-oauth', ?, ?)`,
-		handle, username, avatarURL, fmt.Sprintf("https://github.com/%s", username), now, now,
+		handle, displayName, avatarURL, fmt.Sprintf("https://github.com/%s", username), now, now,
 	)
 	if err != nil {
 		return 0, false, fmt.Errorf("creating builder from github: %w", err)

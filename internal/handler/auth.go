@@ -458,8 +458,13 @@ func (h *AuthHandler) GitHubCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	displayName := ghUser.Name
+	if displayName == "" {
+		displayName = ghUser.Login
+	}
+
 	builderID, created, err := h.authStore.FindOrCreateBuilderByGitHub(
-		ghUser.ID, ghUser.Login, ghUser.AvatarURL, token.AccessToken,
+		ghUser.ID, ghUser.Login, displayName, ghUser.AvatarURL, token.AccessToken,
 	)
 	if err != nil {
 		h.logger.Error("failed to find or create builder from github", "error", err)
