@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	_ "modernc.org/sqlite"
 )
@@ -176,6 +177,22 @@ func runMigrations(db *sql.DB) error {
 	for _, m := range migrations {
 		if _, err := db.Exec(m); err != nil {
 			return fmt.Errorf("executing migration: %w\nSQL: %s", err, m)
+		}
+	}
+
+	// Schema evolution: add columns (idempotent — ignores "duplicate column" errors)
+	alterations := []string{
+		`ALTER TABLE builds ADD COLUMN what_works TEXT DEFAULT ''`,
+		`ALTER TABLE builds ADD COLUMN what_broke TEXT DEFAULT ''`,
+		`ALTER TABLE builds ADD COLUMN what_id_change TEXT DEFAULT ''`,
+		`ALTER TABLE build_updates ADD COLUMN type TEXT DEFAULT 'milestone'`,
+		`ALTER TABLE build_updates ADD COLUMN title TEXT DEFAULT ''`,
+	}
+	for _, alt := range alterations {
+		if _, err := db.Exec(alt); err != nil {
+			if !strings.Contains(err.Error(), "duplicate column") {
+				return fmt.Errorf("schema evolution: %w\nSQL: %s", err, alt)
+			}
 		}
 	}
 

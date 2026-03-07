@@ -29,11 +29,20 @@ func (s *BuildStore) List(params model.BuildListParams) ([]model.Build, int, err
 		where = append(where, "b.status = ?")
 		args = append(args, params.Status)
 	}
+	if params.Builder != "" {
+		where = append(where, "bu.handle = ?")
+		args = append(args, params.Builder)
+	}
 
 	whereClause := strings.Join(where, " AND ")
 
 	var total int
-	err := s.db.QueryRow("SELECT COUNT(*) FROM builds b WHERE "+whereClause, args...).Scan(&total)
+	countQuery := "SELECT COUNT(*) FROM builds b"
+	if params.Builder != "" {
+		countQuery += " JOIN builders bu ON b.builder_id = bu.id"
+	}
+	countQuery += " WHERE " + whereClause
+	err := s.db.QueryRow(countQuery, args...).Scan(&total)
 	if err != nil {
 		return nil, 0, fmt.Errorf("counting builds: %w", err)
 	}
@@ -56,7 +65,8 @@ func (s *BuildStore) List(params model.BuildListParams) ([]model.Build, int, err
 	}
 
 	query := fmt.Sprintf(
-		`SELECT b.id, b.builder_id, b.name, b.description, b.status, b.repo_url, b.live_url, b.cover_image, b.created_at, b.updated_at,
+		`SELECT b.id, b.builder_id, b.name, b.description, b.status, b.repo_url, b.live_url, b.cover_image,
+		        b.what_works, b.what_broke, b.what_id_change, b.created_at, b.updated_at,
 		        bu.id, bu.handle, bu.display_name, bu.avatar_url
 		 FROM builds b
 		 JOIN builders bu ON b.builder_id = bu.id
@@ -74,7 +84,8 @@ func (s *BuildStore) List(params model.BuildListParams) ([]model.Build, int, err
 		var b model.Build
 		var builder model.Builder
 		if err := rows.Scan(
-			&b.ID, &b.BuilderID, &b.Name, &b.Description, &b.Status, &b.RepoURL, &b.LiveURL, &b.CoverImage, &b.CreatedAt, &b.UpdatedAt,
+			&b.ID, &b.BuilderID, &b.Name, &b.Description, &b.Status, &b.RepoURL, &b.LiveURL, &b.CoverImage,
+			&b.WhatWorks, &b.WhatBroke, &b.WhatIdChange, &b.CreatedAt, &b.UpdatedAt,
 			&builder.ID, &builder.Handle, &builder.DisplayName, &builder.AvatarURL,
 		); err != nil {
 			return nil, 0, fmt.Errorf("scanning build row: %w", err)
@@ -95,12 +106,14 @@ func (s *BuildStore) GetByID(id int64) (*model.Build, error) {
 	b := &model.Build{}
 	var builder model.Builder
 	err := s.db.QueryRow(
-		`SELECT b.id, b.builder_id, b.name, b.description, b.status, b.repo_url, b.live_url, b.cover_image, b.created_at, b.updated_at,
+		`SELECT b.id, b.builder_id, b.name, b.description, b.status, b.repo_url, b.live_url, b.cover_image,
+		        b.what_works, b.what_broke, b.what_id_change, b.created_at, b.updated_at,
 		        bu.id, bu.handle, bu.display_name, bu.avatar_url
 		 FROM builds b
 		 JOIN builders bu ON b.builder_id = bu.id
 		 WHERE b.id = ?`, id,
-	).Scan(&b.ID, &b.BuilderID, &b.Name, &b.Description, &b.Status, &b.RepoURL, &b.LiveURL, &b.CoverImage, &b.CreatedAt, &b.UpdatedAt,
+	).Scan(&b.ID, &b.BuilderID, &b.Name, &b.Description, &b.Status, &b.RepoURL, &b.LiveURL, &b.CoverImage,
+		&b.WhatWorks, &b.WhatBroke, &b.WhatIdChange, &b.CreatedAt, &b.UpdatedAt,
 		&builder.ID, &builder.Handle, &builder.DisplayName, &builder.AvatarURL)
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -128,9 +141,9 @@ func (s *BuildStore) GetByID(id int64) (*model.Build, error) {
 func (s *BuildStore) Create(req model.CreateBuildRequest) (*model.Build, error) {
 	now := time.Now().UTC()
 	result, err := s.db.Exec(
-		`INSERT INTO builds (builder_id, name, description, status, repo_url, live_url, cover_image, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		req.BuilderID, req.Name, req.Description, req.Status, req.RepoURL, req.LiveURL, req.CoverImage, now, now,
+		`INSERT INTO builds (builder_id, name, description, status, repo_url, live_url, cover_image, what_works, what_broke, what_id_change, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		req.BuilderID, req.Name, req.Description, req.Status, req.RepoURL, req.LiveURL, req.CoverImage, req.WhatWorks, req.WhatBroke, req.WhatIdChange, now, now,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("inserting build: %w", err)
@@ -175,6 +188,18 @@ func (s *BuildStore) Update(id int64, req model.UpdateBuildRequest) (*model.Buil
 	if req.CoverImage != nil {
 		sets = append(sets, "cover_image = ?")
 		args = append(args, *req.CoverImage)
+	}
+	if req.WhatWorks != nil {
+		sets = append(sets, "what_works = ?")
+		args = append(args, *req.WhatWorks)
+	}
+	if req.WhatBroke != nil {
+		sets = append(sets, "what_broke = ?")
+		args = append(args, *req.WhatBroke)
+	}
+	if req.WhatIdChange != nil {
+		sets = append(sets, "what_id_change = ?")
+		args = append(args, *req.WhatIdChange)
 	}
 
 	if len(sets) > 0 {
@@ -277,7 +302,7 @@ func (s *BuildStore) getTechnologiesForBuild(buildID int64) ([]model.Technology,
 
 func (s *BuildStore) getUpdatesForBuild(buildID int64) ([]model.BuildUpdate, error) {
 	rows, err := s.db.Query(
-		`SELECT id, build_id, content, created_at FROM build_updates WHERE build_id = ? ORDER BY created_at DESC`, buildID,
+		`SELECT id, build_id, type, title, content, created_at FROM build_updates WHERE build_id = ? ORDER BY created_at DESC`, buildID,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("querying updates for build: %w", err)
@@ -287,7 +312,7 @@ func (s *BuildStore) getUpdatesForBuild(buildID int64) ([]model.BuildUpdate, err
 	updates := make([]model.BuildUpdate, 0)
 	for rows.Next() {
 		var u model.BuildUpdate
-		if err := rows.Scan(&u.ID, &u.BuildID, &u.Content, &u.CreatedAt); err != nil {
+		if err := rows.Scan(&u.ID, &u.BuildID, &u.Type, &u.Title, &u.Content, &u.CreatedAt); err != nil {
 			return nil, fmt.Errorf("scanning build update: %w", err)
 		}
 		updates = append(updates, u)

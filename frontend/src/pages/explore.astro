@@ -2,54 +2,15 @@
 import Page from '../layouts/Page.astro';
 import BuildCard from '../components/BuildCard.astro';
 import { detectLocaleFromPath, useTranslations, localePath } from '../i18n/index';
+import { getBuilds, getTechnologies } from '../lib/api';
 
 const locale = detectLocaleFromPath(Astro.url.pathname);
 const t = useTranslations(locale);
 
-// Mock data — replace with API call
-const builds = [
-  {
-    id: '1',
-    name: 'StackRigs',
-    tagline: 'An open index of what developers build',
-    status: 'building' as const,
-    stack: [
-      { slug: 'go', displayName: 'Go' },
-      { slug: 'astro', displayName: 'Astro' },
-      { slug: 'sqlite', displayName: 'SQLite' },
-    ],
-    whatWorks: 'SQLite on a Pi 5 handles 500+ req/s without breaking a sweat.',
-    lastUpdated: '2026-03-01',
-  },
-  {
-    id: '2',
-    name: 'DataForge',
-    tagline: 'ETL pipelines for small teams',
-    status: 'launched' as const,
-    stack: [
-      { slug: 'python', displayName: 'Python' },
-      { slug: 'postgresql', displayName: 'PostgreSQL' },
-    ],
-    whatWorks: 'PostgreSQL logical replication is rock solid for CDC.',
-    lastUpdated: '2026-02-15',
-  },
-  {
-    id: '3',
-    name: 'Noteship',
-    tagline: 'Offline-first notes with sync',
-    status: 'building' as const,
-    stack: [
-      { slug: 'react', displayName: 'React' },
-      { slug: 'crdts', displayName: 'CRDTs' },
-    ],
-    lastUpdated: '2026-02-28',
-  },
-];
-
-const technologies = ['Go', 'React', 'Python', 'Rust', 'TypeScript', 'Astro'];
+const { builds } = await getBuilds({ limit: 20, sort: 'updated' });
+const techs = await getTechnologies();
+const technologies = techs.map(t => t.displayName);
 const statuses = ['building', 'launched', 'paused', 'abandoned'];
-const currentPage = 1;
-const totalPages = 5;
 ---
 
 <Page
@@ -103,29 +64,11 @@ const totalPages = 5;
           ))}
         </div>
 
-        <!-- Pagination -->
-        <nav class="pagination" aria-label="Pagination">
-          {currentPage > 1 && (
-            <a href={`?page=${currentPage - 1}`} class="btn btn-ghost" aria-label={t('explore.prev')}>
-              &larr; {t('explore.prev')}
-            </a>
-          )}
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-            <a
-              href={`?page=${page}`}
-              class="pagination-page"
-              aria-current={page === currentPage ? 'page' : undefined}
-              aria-label={`Page ${page}`}
-            >
-              {page}
-            </a>
-          ))}
-          {currentPage < totalPages && (
-            <a href={`?page=${currentPage + 1}`} class="btn btn-ghost" aria-label={t('explore.next')}>
-              {t('explore.next')} &rarr;
-            </a>
-          )}
-        </nav>
+        {builds.length === 0 && (
+          <p class="text-muted" style="text-align: center; padding: var(--space-8);">
+            {t('explore.noBuilds')}
+          </p>
+        )}
       </div>
     </div>
   </section>

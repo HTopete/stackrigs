@@ -77,7 +77,8 @@ func (s *TechnologyStore) GetBuildsBySlug(slug string, limit, offset int) ([]mod
 	}
 
 	rows, err := s.db.Query(
-		`SELECT b.id, b.builder_id, b.name, b.description, b.status, b.repo_url, b.live_url, b.cover_image, b.created_at, b.updated_at,
+		`SELECT b.id, b.builder_id, b.name, b.description, b.status, b.repo_url, b.live_url, b.cover_image,
+		        b.what_works, b.what_broke, b.what_id_change, b.created_at, b.updated_at,
 		        bu.id, bu.handle, bu.display_name, bu.avatar_url
 		 FROM builds b
 		 JOIN build_technologies bt ON b.id = bt.build_id
@@ -97,7 +98,8 @@ func (s *TechnologyStore) GetBuildsBySlug(slug string, limit, offset int) ([]mod
 		var b model.Build
 		var builder model.Builder
 		if err := rows.Scan(
-			&b.ID, &b.BuilderID, &b.Name, &b.Description, &b.Status, &b.RepoURL, &b.LiveURL, &b.CoverImage, &b.CreatedAt, &b.UpdatedAt,
+			&b.ID, &b.BuilderID, &b.Name, &b.Description, &b.Status, &b.RepoURL, &b.LiveURL, &b.CoverImage,
+			&b.WhatWorks, &b.WhatBroke, &b.WhatIdChange, &b.CreatedAt, &b.UpdatedAt,
 			&builder.ID, &builder.Handle, &builder.DisplayName, &builder.AvatarURL,
 		); err != nil {
 			return nil, 0, fmt.Errorf("scanning build: %w", err)

@@ -28,19 +28,22 @@ type CreateBuilderRequest struct {
 }
 
 type Build struct {
-	ID          int64        `json:"id"`
-	BuilderID   int64        `json:"builder_id"`
-	Builder     *Builder     `json:"builder,omitempty"`
-	Name        string       `json:"name"`
-	Description string       `json:"description"`
-	Status      string       `json:"status"`
-	RepoURL     string       `json:"repo_url,omitempty"`
-	LiveURL     string       `json:"live_url,omitempty"`
-	CoverImage  string       `json:"cover_image,omitempty"`
+	ID           int64        `json:"id"`
+	BuilderID    int64        `json:"builder_id"`
+	Builder      *Builder     `json:"builder,omitempty"`
+	Name         string       `json:"name"`
+	Description  string       `json:"description"`
+	Status       string       `json:"status"`
+	RepoURL      string       `json:"repo_url,omitempty"`
+	LiveURL      string       `json:"live_url,omitempty"`
+	CoverImage   string       `json:"cover_image,omitempty"`
+	WhatWorks    string       `json:"what_works,omitempty"`
+	WhatBroke    string       `json:"what_broke,omitempty"`
+	WhatIdChange string       `json:"what_id_change,omitempty"`
 	Technologies []Technology `json:"technologies,omitempty"`
-	Updates     []BuildUpdate `json:"updates,omitempty"`
-	CreatedAt   time.Time    `json:"created_at"`
-	UpdatedAt   time.Time    `json:"updated_at"`
+	Updates      []BuildUpdate `json:"updates,omitempty"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
 }
 
 type CreateBuildRequest struct {
@@ -51,22 +54,30 @@ type CreateBuildRequest struct {
 	RepoURL      string   `json:"repo_url"`
 	LiveURL      string   `json:"live_url"`
 	CoverImage   string   `json:"cover_image"`
+	WhatWorks    string   `json:"what_works"`
+	WhatBroke    string   `json:"what_broke"`
+	WhatIdChange string   `json:"what_id_change"`
 	Technologies []string `json:"technologies"`
 }
 
 type UpdateBuildRequest struct {
-	Name        *string  `json:"name,omitempty"`
-	Description *string  `json:"description,omitempty"`
-	Status      *string  `json:"status,omitempty"`
-	RepoURL     *string  `json:"repo_url,omitempty"`
-	LiveURL     *string  `json:"live_url,omitempty"`
-	CoverImage  *string  `json:"cover_image,omitempty"`
+	Name         *string  `json:"name,omitempty"`
+	Description  *string  `json:"description,omitempty"`
+	Status       *string  `json:"status,omitempty"`
+	RepoURL      *string  `json:"repo_url,omitempty"`
+	LiveURL      *string  `json:"live_url,omitempty"`
+	CoverImage   *string  `json:"cover_image,omitempty"`
+	WhatWorks    *string  `json:"what_works,omitempty"`
+	WhatBroke    *string  `json:"what_broke,omitempty"`
+	WhatIdChange *string  `json:"what_id_change,omitempty"`
 	Technologies []string `json:"technologies,omitempty"`
 }
 
 type BuildUpdate struct {
 	ID        int64     `json:"id"`
 	BuildID   int64     `json:"build_id"`
+	Type      string    `json:"type"`
+	Title     string    `json:"title"`
 	Content   string    `json:"content"`
 	CreatedAt time.Time `json:"created_at"`
 }
@@ -80,11 +91,12 @@ type Technology struct {
 }
 
 type BuildListParams struct {
-	Tech   string
-	Status string
-	Sort   string
-	Limit  int
-	Offset int
+	Tech    string
+	Status  string
+	Sort    string
+	Builder string
+	Limit   int
+	Offset  int
 }
 
 type SearchResult struct {

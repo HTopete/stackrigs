@@ -59,16 +59,19 @@ CREATE TABLE IF NOT EXISTS technologies (
 -- 4. builds — proyecto / build log
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS builds (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    builder_id   INTEGER NOT NULL,
-    name         TEXT NOT NULL,
-    description  TEXT DEFAULT '',
-    status       TEXT NOT NULL DEFAULT 'building',
-    repo_url     TEXT DEFAULT '',
-    live_url     TEXT DEFAULT '',
-    cover_image  TEXT DEFAULT '',
-    created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    builder_id     INTEGER NOT NULL,
+    name           TEXT NOT NULL,
+    description    TEXT DEFAULT '',
+    status         TEXT NOT NULL DEFAULT 'building',
+    repo_url       TEXT DEFAULT '',
+    live_url       TEXT DEFAULT '',
+    cover_image    TEXT DEFAULT '',
+    what_works     TEXT DEFAULT '',
+    what_broke     TEXT DEFAULT '',
+    what_id_change TEXT DEFAULT '',
+    created_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (builder_id) REFERENCES builders(id) ON DELETE CASCADE
 );
 
@@ -89,6 +92,8 @@ CREATE TABLE IF NOT EXISTS build_technologies (
 CREATE TABLE IF NOT EXISTS build_updates (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     build_id   INTEGER NOT NULL,
+    type       TEXT DEFAULT 'milestone',
+    title      TEXT DEFAULT '',
     content    TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (build_id) REFERENCES builds(id) ON DELETE CASCADE

@@ -26,6 +26,7 @@
   "builder": {
     "bio": "Bio",
     "builds": "Builds",
+    "noBuilds": "Aun no hay builds.",
     "memberSince": "Miembro desde",
     "lastActive": "Ultima actividad"
   },
@@ -88,7 +89,8 @@
     "sortUpdated": "Actualizados recientemente",
     "sortCreated": "Creados recientemente",
     "prev": "Anterior",
-    "next": "Siguiente"
+    "next": "Siguiente",
+    "noBuilds": "Aun no hay builds. Se el primero en compartir el tuyo."
   },
   "about": {
     "title": "Acerca de StackRigs",

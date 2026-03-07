@@ -31,11 +31,12 @@ func (h *BuildHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params := model.BuildListParams{
-		Tech:   q.Get("tech"),
-		Status: q.Get("status"),
-		Sort:   q.Get("sort"),
-		Limit:  limit,
-		Offset: offset,
+		Tech:    q.Get("tech"),
+		Status:  q.Get("status"),
+		Sort:    q.Get("sort"),
+		Builder: q.Get("builder"),
+		Limit:   limit,
+		Offset:  offset,
 	}
 
 	builds, total, err := h.store.List(params)
