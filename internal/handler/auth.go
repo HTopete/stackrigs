@@ -501,7 +501,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	cookie := &http.Cookie{
+	clearCookie := &http.Cookie{
 		Name:     sessionCookieName,
 		Value:    "",
 		Path:     "/",
@@ -511,9 +511,9 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Secure:   h.cfg.IsProd(),
 	}
 	if h.cfg.CookieDomain != "" {
-		cookie.Domain = h.cfg.CookieDomain
+		clearCookie.Domain = h.cfg.CookieDomain
 	}
-	http.SetCookie(w, cookie)
+	http.SetCookie(w, clearCookie)
 
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
