@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/htopete/stackrigs/internal/middleware"
 	"github.com/htopete/stackrigs/internal/model"
 	"github.com/htopete/stackrigs/internal/store"
 )
@@ -78,14 +79,22 @@ func (h *BuildHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BuildHandler) Create(w http.ResponseWriter, r *http.Request) {
+	builder := middleware.BuilderFromContext(r.Context())
+	if builder == nil {
+		writeError(w, http.StatusUnauthorized, "authentication required")
+		return
+	}
+
 	var req model.CreateBuildRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	if req.Name == "" || req.BuilderID == 0 {
-		writeError(w, http.StatusBadRequest, "name and builder_id are required")
+	req.BuilderID = builder.ID
+
+	if req.Name == "" {
+		writeError(w, http.StatusBadRequest, "name is required")
 		return
 	}
 
@@ -117,6 +126,12 @@ func (h *BuildHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	builder := middleware.BuilderFromContext(r.Context())
+	if builder == nil {
+		writeError(w, http.StatusUnauthorized, "authentication required")
+		return
+	}
+
 	existing, err := h.store.GetByID(id)
 	if err != nil {
 		h.logger.Error("failed to get build for update", "error", err, "id", id)
@@ -128,7 +143,10 @@ func (h *BuildHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// In a real app, check auth here: r.Context().Value("builder_id") == existing.BuilderID
+	if existing.BuilderID != builder.ID {
+		writeError(w, http.StatusForbidden, "you can only edit your own builds")
+		return
+	}
 
 	var req model.UpdateBuildRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
