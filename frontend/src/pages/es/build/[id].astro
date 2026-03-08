@@ -2,6 +2,7 @@
 import Page from '../../../layouts/Page.astro';
 import BuildLog from '../../../components/BuildLog.astro';
 import EmbedPreview from '../../../components/EmbedPreview.astro';
+import BuildUpdatesIsland from '../../../islands/BuildUpdatesIsland.tsx';
 import { detectLocaleFromPath, useTranslations, localePath } from '../../../i18n/index';
 import { getBuild, getAllBuildIds, API_BASE } from '../../../lib/api';
 
@@ -48,6 +49,37 @@ export async function getStaticPaths() {
     <!-- Embed Preview -->
     <div style="margin-top: var(--space-10);">
       <EmbedPreview handle={build.builderHandle} buildId={build.id} />
+    </div>
+
+    <!-- Build Updates Timeline -->
+    <div style="margin-top: var(--space-10);">
+      <BuildUpdatesIsland
+        client:visible
+        buildId={id!}
+        locale={locale}
+        labels={{
+          title: t('buildUpdates.title'),
+          addUpdate: t('buildUpdates.addUpdate'),
+          updateTitle: t('buildUpdates.updateTitle'),
+          updateTitlePlaceholder: t('buildUpdates.updateTitlePlaceholder'),
+          content: t('buildUpdates.content'),
+          contentPlaceholder: t('buildUpdates.contentPlaceholder'),
+          type: t('buildUpdates.type'),
+          submit: t('buildUpdates.submit'),
+          cancel: t('buildUpdates.cancel'),
+          saving: t('buildUpdates.saving'),
+          deleteConfirm: t('buildUpdates.deleteConfirm'),
+          noUpdates: t('buildUpdates.noUpdates'),
+          typeLabels: {
+            milestone: t('updates.milestone'),
+            stack_change: t('updates.stackChange'),
+            infra_change: t('updates.infraChange'),
+            tool_change: t('updates.toolChange'),
+            reflection: t('updates.reflection'),
+            pivot: t('updates.pivot'),
+          },
+        }}
+      />
     </div>
 
   </section>
