@@ -64,7 +64,8 @@
     "connecting": "Conectando...",
     "loadAvg": "Carga promedio",
     "memTotal": "Mem Total",
-    "memAvailable": "Mem Disponible"
+    "memAvailable": "Mem Disponible",
+    "noData": "Sin datos"
   },
   "common": {
     "showMore": "Ver mas",

@@ -160,7 +160,16 @@ func runMigrations(db *sql.DB) error {
 			tokenize='porter unicode61'
 		)`,
 
+		// Uptime tracking: one row per health check ping
+		`CREATE TABLE IF NOT EXISTS uptime_checks (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			checked_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+			status TEXT NOT NULL DEFAULT 'ok',
+			response_ms INTEGER DEFAULT 0
+		)`,
+
 		// Indexes
+		`CREATE INDEX IF NOT EXISTS idx_uptime_checks_date ON uptime_checks(checked_at)`,
 		`CREATE INDEX IF NOT EXISTS idx_builds_builder_id ON builds(builder_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_builds_status ON builds(status)`,
 		`CREATE INDEX IF NOT EXISTS idx_builds_updated_at ON builds(updated_at)`,
