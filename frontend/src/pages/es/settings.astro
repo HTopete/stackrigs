@@ -1,0 +1,40 @@
+---
+import Page from '../../layouts/Page.astro';
+import ProfileEditIsland from '../../islands/ProfileEditIsland.tsx';
+import { detectLocaleFromPath, useTranslations } from '../../i18n/index';
+
+const locale = detectLocaleFromPath(Astro.url.pathname);
+const t = useTranslations(locale);
+---
+
+<Page
+  title={`${t('settings.title')} — StackRigs`}
+  description="Edita tu perfil de StackRigs."
+>
+  <section class="page-section" style="max-width: 720px; margin: 0 auto;">
+    <ProfileEditIsland
+      client:load
+      locale={locale}
+      labels={{
+        title: t('settings.title'),
+        displayName: t('settings.displayName'),
+        bio: t('settings.bio'),
+        website: t('settings.website'),
+        twitter: t('settings.twitter'),
+        avatar: t('settings.avatar'),
+        save: t('settings.save'),
+        saving: t('settings.saving'),
+        saved: t('settings.saved'),
+        error: t('settings.error'),
+        loginRequired: t('settings.loginRequired'),
+        changeAvatar: t('settings.changeAvatar'),
+      }}
+    />
+  </section>
+</Page>
+
+<style>
+  .page-section {
+    padding-block: var(--space-8);
+  }
+</style>

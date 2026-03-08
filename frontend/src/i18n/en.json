@@ -7,7 +7,9 @@
     "infra": "Infra",
     "signIn": "Sign In",
     "signOut": "Sign Out",
-    "myProfile": "My Profile"
+    "myProfile": "My Profile",
+    "newBuild": "New Build",
+    "editProfile": "Edit Profile"
   },
   "buildLog": {
     "stack": "Stack",
@@ -186,6 +188,20 @@
     "cdn": "CDN",
     "cicd": "CI/CD",
     "monitoring": "Monitoring"
+  },
+  "settings": {
+    "title": "Edit Profile",
+    "displayName": "Display Name",
+    "bio": "Bio",
+    "website": "Website",
+    "twitter": "X / Twitter",
+    "avatar": "Avatar",
+    "save": "Save Changes",
+    "saving": "Saving...",
+    "saved": "Profile updated!",
+    "error": "Something went wrong. Please try again.",
+    "loginRequired": "You need to sign in to edit your profile.",
+    "changeAvatar": "Change Avatar"
   },
   "errors": {
     "notFound": "Not found",

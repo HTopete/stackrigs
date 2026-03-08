@@ -83,3 +83,27 @@ func (s *BuilderStore) Create(req model.CreateBuilderRequest) (*model.Builder, e
 
 	return s.GetByID(id)
 }
+
+func (s *BuilderStore) UpdateAvatar(id int64, avatarURL string) (*model.Builder, error) {
+	now := time.Now().UTC()
+	_, err := s.db.Exec(
+		`UPDATE builders SET avatar_url = ?, updated_at = ? WHERE id = ?`,
+		avatarURL, now, id,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("updating builder avatar: %w", err)
+	}
+	return s.GetByID(id)
+}
+
+func (s *BuilderStore) Update(id int64, displayName, bio, website, twitterURL string) (*model.Builder, error) {
+	now := time.Now().UTC()
+	_, err := s.db.Exec(
+		`UPDATE builders SET display_name = ?, bio = ?, website = ?, twitter_url = ?, updated_at = ? WHERE id = ?`,
+		displayName, bio, website, twitterURL, now, id,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("updating builder: %w", err)
+	}
+	return s.GetByID(id)
+}
