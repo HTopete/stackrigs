@@ -486,7 +486,7 @@ func (h *AuthHandler) GitHubCallback(w http.ResponseWriter, r *http.Request) {
 
 	h.setSessionCookie(w, sessionID)
 
-	redirectURL := h.cfg.BaseURL + "/?auth=success"
+	redirectURL := h.cfg.FrontendURL + "/?auth=success"
 	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 }
 
