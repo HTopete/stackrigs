@@ -1,6 +1,7 @@
 ---
 import Page from '../../layouts/Page.astro';
 import InfraLive from '../../islands/InfraLive';
+import UptimeBar from '../../islands/UptimeBar';
 import StackTag from '../../components/StackTag.astro';
 import { detectLocaleFromPath, useTranslations, localePath } from '../../i18n/index';
 
@@ -26,6 +27,15 @@ const infraLabels = {
   live: t('infra.live'),
   connecting: t('infra.connecting'),
 };
+
+const uptimeLabels = {
+  title: t('infra.uptimeHistory'),
+  daysAgo: t('infra.daysAgo'),
+  today: t('infra.today'),
+  fullUptime: t('infra.fullUptime'),
+  partialOutage: t('infra.partialOutage'),
+  noData: t('infra.noData'),
+};
 ---
 
 <Page
@@ -45,6 +55,9 @@ const infraLabels = {
       <div style="display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4);">
         {projectStack.map(tech => <StackTag slug={tech.slug} displayName={tech.displayName} />)}
       </div>
+    </div>
+    <div style="margin-top: var(--space-10);">
+      <UptimeBar client:visible labels={uptimeLabels} />
     </div>
   </section>
 </Page>

@@ -64,7 +64,8 @@
     "connecting": "Connecting...",
     "loadAvg": "Load Avg",
     "memTotal": "Mem Total",
-    "memAvailable": "Mem Available"
+    "memAvailable": "Mem Available",
+    "noData": "No data"
   },
   "common": {
     "showMore": "Show more",

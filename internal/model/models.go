@@ -115,6 +115,15 @@ type InfraMetrics struct {
 	Timestamp    string  `json:"timestamp"`
 }
 
+// UptimeDay represents a single day's uptime summary.
+type UptimeDay struct {
+	Date      string  `json:"date"`       // YYYY-MM-DD
+	ChecksOK  int     `json:"checks_ok"`
+	ChecksTotal int   `json:"checks_total"`
+	UptimePct float64 `json:"uptime_pct"` // 0-100
+	Status    string  `json:"status"`     // "up", "partial", "down"
+}
+
 type HealthResponse struct {
 	Status   string `json:"status"`
 	Database string `json:"database"`

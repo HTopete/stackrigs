@@ -20,6 +20,14 @@ type InfraHandler struct {
 	startTime    time.Time
 	requestCount atomic.Int64
 	cache        *infraCache
+	uptimeStore  UptimeStore
+}
+
+// UptimeStore is the interface needed by InfraHandler for uptime tracking.
+type UptimeStore interface {
+	RecordCheck(status string, responseMs int) error
+	GetDailySummary(days int) ([]model.UptimeDay, error)
+	Cleanup(keepDays int) (int64, error)
 }
 
 type infraCache struct {
@@ -28,11 +36,51 @@ type infraCache struct {
 	expiresAt time.Time
 }
 
-func NewInfraHandler() *InfraHandler {
+func NewInfraHandler(uptimeStore UptimeStore) *InfraHandler {
 	return &InfraHandler{
-		startTime: time.Now(),
-		cache:     &infraCache{},
+		startTime:   time.Now(),
+		cache:       &infraCache{},
+		uptimeStore: uptimeStore,
 	}
+}
+
+// StartUptimeTracker runs a background goroutine that records a health check
+// every 5 minutes and cleans up old records daily.
+func (h *InfraHandler) StartUptimeTracker() {
+	// Record an initial check on startup
+	_ = h.uptimeStore.RecordCheck("ok", 0)
+
+	go func() {
+		checkTicker := time.NewTicker(5 * time.Minute)
+		cleanupTicker := time.NewTicker(24 * time.Hour)
+		defer checkTicker.Stop()
+		defer cleanupTicker.Stop()
+
+		for {
+			select {
+			case <-checkTicker.C:
+				// The server is alive if this code runs
+				_ = h.uptimeStore.RecordCheck("ok", 0)
+			case <-cleanupTicker.C:
+				// Keep 45 days of history
+				if cleaned, err := h.uptimeStore.Cleanup(45); err == nil && cleaned > 0 {
+					fmt.Fprintf(os.Stderr, "uptime cleanup: removed %d old checks\n", cleaned)
+				}
+			}
+		}
+	}()
+}
+
+// UptimeHistory returns the last 30 days of uptime data as JSON.
+// GET /api/infra/uptime
+func (h *InfraHandler) UptimeHistory(w http.ResponseWriter, r *http.Request) {
+	days, err := h.uptimeStore.GetDailySummary(30)
+	if err != nil {
+		http.Error(w, "failed to get uptime history", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(days)
 }
 
 func (h *InfraHandler) IncrementRequests() {

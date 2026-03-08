@@ -1,6 +1,7 @@
 ---
 import Page from '../layouts/Page.astro';
 import InfraLive from '../islands/InfraLive';
+import UptimeBar from '../islands/UptimeBar';
 import StackTag from '../components/StackTag.astro';
 import { detectLocaleFromPath, useTranslations, localePath } from '../i18n/index';
 
@@ -25,6 +26,15 @@ const infraLabels = {
   memAvailable: t('infra.memAvailable'),
   live: t('infra.live'),
   connecting: t('infra.connecting'),
+};
+
+const uptimeLabels = {
+  title: t('infra.uptimeHistory'),
+  daysAgo: t('infra.daysAgo'),
+  today: t('infra.today'),
+  fullUptime: t('infra.fullUptime'),
+  partialOutage: t('infra.partialOutage'),
+  noData: t('infra.noData'),
 };
 ---
 
@@ -58,25 +68,7 @@ const infraLabels = {
 
     <!-- Uptime History -->
     <div style="margin-top: var(--space-10);">
-      <h2>{t('infra.uptimeHistory')}</h2>
-      <div class="uptime-history" style="margin-top: var(--space-4);">
-        <div class="uptime-bar">
-          {Array.from({ length: 30 }, (_, i) => {
-            const isDown = i === 12 || i === 23;
-            return (
-              <div
-                class={`uptime-day ${isDown ? 'uptime-day-down' : 'uptime-day-up'}`}
-                title={`Day ${30 - i}: ${isDown ? t('infra.partialOutage') : t('infra.fullUptime')}`}
-                aria-label={`Day ${30 - i}: ${isDown ? t('infra.partialOutage') : t('infra.fullUptime')}`}
-              />
-            );
-          })}
-        </div>
-        <div class="uptime-labels">
-          <span class="text-muted font-mono" style="font-size: var(--font-size-xs);">{t('infra.daysAgo')}</span>
-          <span class="text-muted font-mono" style="font-size: var(--font-size-xs);">{t('infra.today')}</span>
-        </div>
-      </div>
+      <UptimeBar client:visible labels={uptimeLabels} />
     </div>
   </section>
 </Page>
@@ -88,31 +80,39 @@ const infraLabels = {
     gap: var(--space-2);
   }
 
-  .uptime-bar {
+  :global(.uptime-bar) {
     display: flex;
     gap: 2px;
   }
 
-  .uptime-day {
+  :global(.uptime-day) {
     flex: 1;
     height: 32px;
     border-radius: 2px;
     transition: opacity var(--duration-fast) var(--ease-out);
   }
 
-  .uptime-day:hover {
+  :global(.uptime-day:hover) {
     opacity: 0.8;
   }
 
-  .uptime-day-up {
+  :global(.uptime-day-up) {
     background: var(--color-accent-green);
   }
 
-  .uptime-day-down {
+  :global(.uptime-day-partial) {
+    background: var(--color-accent-yellow);
+  }
+
+  :global(.uptime-day-down) {
     background: var(--color-accent-red);
   }
 
-  .uptime-labels {
+  :global(.uptime-day-unknown) {
+    background: var(--color-border);
+  }
+
+  :global(.uptime-labels) {
     display: flex;
     justify-content: space-between;
     margin-top: var(--space-2);

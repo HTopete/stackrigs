@@ -75,12 +75,15 @@ func main() {
 
 	// Handlers
 	healthH := handler.NewHealthHandler(db)
-	infraH := handler.NewInfraHandler()
+	uptimeStore := store.NewUptimeStore(db)
+	infraH := handler.NewInfraHandler(uptimeStore)
 	builderH := handler.NewBuilderHandler(builderStore, logger)
 	buildH := handler.NewBuildHandler(buildStore, logger)
 	technologyH := handler.NewTechnologyHandler(technologyStore, logger)
 	searchH := handler.NewSearchHandler(searchStore, logger)
 	badgeH := handler.NewBadgeHandler(builderStore, buildStore, logger)
+
+	infraH.StartUptimeTracker()
 
 	authH, err := handler.NewAuthHandler(authStore, builderStore, cfg, logger)
 	if err != nil {
@@ -142,6 +145,7 @@ func main() {
 			r.Use(middleware.ETag)
 
 			r.Get("/infra", infraH.Infra)
+			r.Get("/infra/uptime", infraH.UptimeHistory)
 			r.Get("/builders/{handle}", builderH.GetByHandle)
 			r.Get("/builds", buildH.List)
 			r.Get("/builds/{id}", buildH.GetByID)
