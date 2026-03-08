@@ -1,0 +1,19 @@
+---
+import Page from '../layouts/Page.astro';
+import { detectLocaleFromPath, useTranslations, localePath } from '../i18n/index';
+
+const locale = detectLocaleFromPath(Astro.url.pathname);
+const t = useTranslations(locale);
+---
+
+<Page title="404 — StackRigs" description="Page not found">
+  <section class="page-section" style="text-align: center; padding-block: var(--space-16);">
+    <h1 style="font-size: clamp(3rem, 8vw, 6rem); color: var(--color-accent); font-family: var(--font-mono);">404</h1>
+    <p style="font-size: var(--font-size-lg); color: var(--color-text-secondary); margin-top: var(--space-4);">
+      {t('errors.notFound')}
+    </p>
+    <a href={localePath(locale, '/')} class="btn btn-primary" style="margin-top: var(--space-8);">
+      {t('nav.home')}
+    </a>
+  </section>
+</Page>

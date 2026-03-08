@@ -319,3 +319,68 @@ func (s *BuildStore) getUpdatesForBuild(buildID int64) ([]model.BuildUpdate, err
 	}
 	return updates, nil
 }
+
+func (s *BuildStore) CreateUpdate(buildID int64, updateType, title, content string) (*model.BuildUpdate, error) {
+	now := time.Now().UTC()
+	result, err := s.db.Exec(
+		`INSERT INTO build_updates (build_id, type, title, content, created_at) VALUES (?, ?, ?, ?, ?)`,
+		buildID, updateType, title, content, now,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("inserting build update: %w", err)
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, fmt.Errorf("getting last insert id: %w", err)
+	}
+
+	// Also touch the build's updated_at
+	_, _ = s.db.Exec(`UPDATE builds SET updated_at = ? WHERE id = ?`, now, buildID)
+
+	return &model.BuildUpdate{
+		ID:        id,
+		BuildID:   buildID,
+		Type:      updateType,
+		Title:     title,
+		Content:   content,
+		CreatedAt: now,
+	}, nil
+}
+
+func (s *BuildStore) DeleteUpdate(updateID, buildID int64) error {
+	result, err := s.db.Exec(
+		`DELETE FROM build_updates WHERE id = ? AND build_id = ?`,
+		updateID, buildID,
+	)
+	if err != nil {
+		return fmt.Errorf("deleting build update: %w", err)
+	}
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return fmt.Errorf("update not found")
+	}
+	return nil
+}
+
+func (s *BuildStore) Delete(id int64) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return fmt.Errorf("starting transaction: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	_, _ = tx.Exec(`DELETE FROM build_technologies WHERE build_id = ?`, id)
+	_, _ = tx.Exec(`DELETE FROM build_updates WHERE build_id = ?`, id)
+
+	result, err := tx.Exec(`DELETE FROM builds WHERE id = ?`, id)
+	if err != nil {
+		return fmt.Errorf("deleting build: %w", err)
+	}
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return fmt.Errorf("build not found")
+	}
+
+	return tx.Commit()
+}
