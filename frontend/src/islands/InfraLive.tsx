@@ -134,13 +134,13 @@ const InfraLive: FunctionComponent<Props> = ({ labels }) => {
 
   return (
     <div class="infra-live" aria-live="polite">
-      <div class="infra-status">
+      <div class="infra-status" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
         <span class={`freshness-dot ${connected ? 'freshness-active' : 'freshness-archived'}`} aria-hidden="true" />
-        <span class="infra-status-text" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
           {connected ? labels.live : labels.connecting}
         </span>
-        {metrics.timestamp && (
-          <span class="infra-timestamp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginLeft: 'var(--space-2)' }}>
+        {connected && metrics.timestamp && (
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
             {new Date(metrics.timestamp).toLocaleTimeString()}
           </span>
         )}

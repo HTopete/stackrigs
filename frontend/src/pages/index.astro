@@ -9,7 +9,8 @@ const locale = detectLocaleFromPath(Astro.url.pathname);
 const t = useTranslations(locale);
 
 const { builds: recentBuilds } = await getBuilds({ limit: 6, sort: 'updated' });
-const popularStacks = await getTechnologies();
+const allStacks = await getTechnologies();
+const popularStacks = allStacks.filter(s => s.count > 0);
 ---
 
 <Page
@@ -43,7 +44,7 @@ const popularStacks = await getTechnologies();
       {popularStacks.map(stack => (
         <a href={localePath(locale, `/stack/${stack.slug}`)} class="popular-stack-item" data-astro-prefetch>
           <span class="popular-stack-name">{stack.displayName}</span>
-          <span class="popular-stack-count font-mono text-muted">{stack.count} {t('stack.builds')}</span>
+          <span class="popular-stack-count font-mono text-muted">{stack.count} {stack.count === 1 ? t('stack.build') : t('stack.builds')}</span>
         </a>
       ))}
     </div>
