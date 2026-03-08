@@ -8,7 +8,8 @@ const locale = detectLocaleFromPath(Astro.url.pathname);
 const t = useTranslations(locale);
 
 const { builds } = await getBuilds({ limit: 20, sort: 'updated' });
-const techs = await getTechnologies();
+const allTechs = await getTechnologies();
+const techs = allTechs.filter(t => t.count > 0);
 
 const exploreLabels = {
   technology: t('explore.technology'),

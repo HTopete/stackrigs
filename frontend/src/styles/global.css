@@ -641,13 +641,17 @@
 
   .mobile-menu {
     display: none;
-    position: fixed;
-    inset: 56px 0 0 0;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: calc(100dvh - 56px);
     background: var(--color-bg);
     z-index: var(--z-overlay);
     padding: var(--space-6);
     flex-direction: column;
     gap: var(--space-4);
+    overflow-y: auto;
   }
 
   .mobile-menu[data-open] {
@@ -1234,39 +1238,37 @@
   /* ── Explore / Filters Sidebar ─────────────────────────── */
 
   .explore-layout {
-    container-type: inline-size;
     display: grid;
     grid-template-columns: 1fr;
     gap: var(--space-8);
     align-items: start;
   }
 
-  @container (min-width: 768px) {
+  @media (min-width: 768px) {
     .explore-layout {
-      grid-template-columns: 240px 1fr;
+      grid-template-columns: 220px 1fr;
     }
   }
 
   .filters {
-    position: sticky;
-    inset-block-start: 72px;
+    position: static;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
   }
 
-  @container (max-width: 767px) {
+  @media (min-width: 768px) {
     .filters {
-      position: static;
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--space-4);
+      display: block;
+      position: sticky;
+      inset-block-start: 72px;
+      max-height: calc(100dvh - 88px);
+      overflow-y: auto;
     }
 
     .filter-group {
-      margin-block-end: 0;
+      margin-block-end: var(--space-6);
     }
-  }
-
-  .filter-group {
-    margin-block-end: var(--space-6);
   }
 
   .filter-group-title {

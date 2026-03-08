@@ -39,10 +39,6 @@ export async function getStaticPaths() {
       <EmbedPreview handle={build.builderHandle} buildId={build.id} />
     </div>
 
-    <!-- Add to README CTA -->
-    <div class="build-cta">
-      <p class="text-secondary">{t('cta.addToReadme')}</p>
-    </div>
   </section>
 </Page>
 
@@ -51,9 +47,4 @@ export async function getStaticPaths() {
     margin-bottom: var(--space-4);
   }
 
-  .build-cta {
-    text-align: center;
-    padding-block: var(--space-8);
-    margin-top: var(--space-6);
-  }
 </style>

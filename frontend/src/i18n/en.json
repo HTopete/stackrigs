@@ -126,6 +126,7 @@
   },
   "stack": {
     "builds": "builds",
+    "build": "build",
     "whatWorksAggregate": "What builders say works",
     "whatBrokeAggregate": "What builders say broke",
     "commonlyUsedWith": "Commonly used with",
