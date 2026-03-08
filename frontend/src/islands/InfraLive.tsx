@@ -36,11 +36,33 @@ const defaultMetrics: InfraMetrics = {
   timestamp: '',
 };
 
+const MAX_SSE_RETRIES = 2;
+
 const InfraLive: FunctionComponent<Props> = ({ labels }) => {
   const [metrics, setMetrics] = useState<InfraMetrics>(defaultMetrics);
   const [connected, setConnected] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval>>();
+  const sseRetriesRef = useRef(0);
+
+  const fallbackFetch = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/infra`);
+      if (res.ok) {
+        const data: InfraMetrics = await res.json();
+        setMetrics(data);
+        setConnected(true);
+      }
+    } catch {
+      // Silently fail
+    }
+  };
+
+  const startPolling = () => {
+    fallbackFetch();
+    pollIntervalRef.current = setInterval(fallbackFetch, 10000);
+  };
 
   const connectSSE = () => {
     if (eventSourceRef.current) {
@@ -53,6 +75,7 @@ const InfraLive: FunctionComponent<Props> = ({ labels }) => {
 
       es.onopen = () => {
         setConnected(true);
+        sseRetriesRef.current = 0;
       };
 
       es.addEventListener('metrics', (event) => {
@@ -67,24 +90,18 @@ const InfraLive: FunctionComponent<Props> = ({ labels }) => {
       es.onerror = () => {
         es.close();
         setConnected(false);
-        // Reconnect after 5 seconds
-        reconnectTimeoutRef.current = setTimeout(connectSSE, 5000);
+        sseRetriesRef.current++;
+
+        if (sseRetriesRef.current >= MAX_SSE_RETRIES) {
+          // SSE not working (e.g. HTTP/3/QUIC), fall back to polling
+          startPolling();
+        } else {
+          reconnectTimeoutRef.current = setTimeout(connectSSE, 3000);
+        }
       };
     } catch {
-      // SSE not supported, fallback to fetch
-      fallbackFetch();
-    }
-  };
-
-  const fallbackFetch = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/infra`);
-      if (res.ok) {
-        const data: InfraMetrics = await res.json();
-        setMetrics(data);
-      }
-    } catch {
-      // Silently fail
+      // SSE constructor failed, fall back to polling
+      startPolling();
     }
   };
 
@@ -92,17 +109,13 @@ const InfraLive: FunctionComponent<Props> = ({ labels }) => {
     if (typeof EventSource !== 'undefined') {
       connectSSE();
     } else {
-      fallbackFetch();
-      // Poll every 10 seconds as fallback
-      const interval = setInterval(fallbackFetch, 10000);
-      return () => clearInterval(interval);
+      startPolling();
     }
 
     return () => {
       eventSourceRef.current?.close();
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     };
   }, []);
 
