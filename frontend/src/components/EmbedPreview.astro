@@ -29,6 +29,7 @@ const embedCode = `<img src="${badgeUrl}" alt="StackRigs build badge for ${handl
       aria-label={t('embed.copyCode')}
       data-embed-copy
       data-code={embedCode}
+      data-copied-text={t('embed.copied')}
     >
       {t('embed.copyCode')}
     </button>
@@ -37,6 +38,7 @@ const embedCode = `<img src="${badgeUrl}" alt="StackRigs build badge for ${handl
   <p class="embed-hint text-muted">
     {t('embed.addToReadme')}
   </p>
+  <p class="embed-status" aria-live="polite" role="status"></p>
 </section>
 
 <script>
@@ -48,8 +50,14 @@ const embedCode = `<img src="${badgeUrl}" alt="StackRigs build badge for ${handl
         try {
           await navigator.clipboard.writeText(code);
           const original = btn.textContent;
-          btn.textContent = 'Copied!';
-          setTimeout(() => { btn.textContent = original; }, 2000);
+          const copiedText = btn.dataset.copiedText || 'Copied!';
+          btn.textContent = copiedText;
+          const status = btn.closest('.embed-box')?.querySelector('.embed-status');
+          if (status) status.textContent = copiedText;
+          setTimeout(() => {
+            btn.textContent = original;
+            if (status) status.textContent = '';
+          }, 2000);
         } catch {
           // Fallback: select text
         }

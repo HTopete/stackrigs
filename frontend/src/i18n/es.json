@@ -41,14 +41,30 @@
     "pivot": "Pivote"
   },
   "search": {
-    "placeholder": "Buscar por tecnologia, builder o proyecto..."
+    "placeholder": "Buscar por tecnologia, builder o proyecto...",
+    "hint": "Prueba buscando React, Supabase o el nombre de un builder",
+    "popular": "Popular",
+    "groupBuilders": "Builders",
+    "groupBuilds": "Builds",
+    "groupTechnologies": "Tecnologias"
   },
   "infra": {
     "uptime": "Disponibilidad",
     "latency": "Latencia",
     "requestsPerMinute": "Peticiones por minuto",
     "memoryUsage": "Uso de memoria",
-    "hostingNote": "Esta pagina corre en una Raspberry Pi 5 en Mazatlan, Mexico"
+    "hostingNote": "Esta pagina corre en una Raspberry Pi 5 en Mazatlan, Mexico",
+    "stack": "Stack",
+    "uptimeHistory": "Historial de disponibilidad",
+    "daysAgo": "Hace 30 dias",
+    "today": "Hoy",
+    "fullUptime": "100% disponible",
+    "partialOutage": "Interrupcion parcial",
+    "live": "En vivo",
+    "connecting": "Conectando...",
+    "loadAvg": "Carga promedio",
+    "memTotal": "Mem Total",
+    "memAvailable": "Mem Disponible"
   },
   "common": {
     "showMore": "Ver mas",
@@ -147,6 +163,27 @@
     "loginRequired": "Necesitas iniciar sesion para crear un build.",
     "success": "Build guardado!",
     "error": "Algo salio mal. Intenta de nuevo."
+  },
+  "signin": {
+    "title": "Iniciar sesion en StackRigs",
+    "description": "Inicia sesion en StackRigs para compartir tu build log.",
+    "heading": "Iniciar sesion en StackRigs",
+    "subtitle": "Comparte tu build log con el mundo.",
+    "passkeyButton": "Iniciar sesion con Passkey",
+    "githubButton": "Iniciar sesion con GitHub",
+    "noAccount": "No tienes cuenta?",
+    "requestInvite": "Solicita una invitacion",
+    "errorPasskeyStart": "No se pudo iniciar la autenticacion con passkey. Intenta de nuevo.",
+    "errorAuthFailed": "La autenticacion fallo. Intenta de nuevo.",
+    "errorNotAvailable": "La autenticacion con passkey no esta disponible en este dispositivo."
+  },
+  "buildLog2": {
+    "updates": "Actualizaciones",
+    "hosting": "Hosting",
+    "database": "Base de datos",
+    "cdn": "CDN",
+    "cicd": "CI/CD",
+    "monitoring": "Monitoreo"
   },
   "errors": {
     "notFound": "No encontrado",

@@ -1,6 +1,6 @@
 ---
 import Page from '../../layouts/Page.astro';
-import BuildCard from '../../components/BuildCard.astro';
+import ExploreIsland from '../../islands/ExploreIsland';
 import { detectLocaleFromPath, useTranslations } from '../../i18n/index';
 import { getBuilds, getTechnologies } from '../../lib/api';
 
@@ -9,8 +9,21 @@ const t = useTranslations(locale);
 
 const { builds } = await getBuilds({ limit: 20, sort: 'updated' });
 const techs = await getTechnologies();
-const technologies = techs.map(t => t.displayName);
-const statuses = ['building', 'launched', 'paused', 'abandoned'];
+
+const exploreLabels = {
+  technology: t('explore.technology'),
+  status: t('explore.status'),
+  sortBy: t('explore.sortBy'),
+  sortUpdated: t('explore.sortUpdated'),
+  sortCreated: t('explore.sortCreated'),
+  noBuilds: t('explore.noBuilds'),
+  statusLabels: {
+    building: t('buildLog.status.building'),
+    launched: t('buildLog.status.launched'),
+    paused: t('buildLog.status.paused'),
+    abandoned: t('buildLog.status.abandoned'),
+  },
+};
 ---
 
 <Page
@@ -19,32 +32,14 @@ const statuses = ['building', 'launched', 'paused', 'abandoned'];
 >
   <section class="page-section">
     <h1>{t('explore.title')}</h1>
-    <div class="explore-layout" style="margin-top: var(--space-8);">
-      <aside class="filters" aria-label={t('explore.filterBy')}>
-        <div class="filter-group">
-          <h3 class="filter-group-title">{t('explore.technology')}</h3>
-          {technologies.map(tech => (
-            <label class="filter-option">
-              <input type="checkbox" name="tech" value={tech.toLowerCase()} />
-              {tech}
-            </label>
-          ))}
-        </div>
-        <div class="filter-group">
-          <h3 class="filter-group-title">{t('explore.status')}</h3>
-          {statuses.map(status => (
-            <label class="filter-option">
-              <input type="checkbox" name="status" value={status} />
-              {t(`buildLog.status.${status}`)}
-            </label>
-          ))}
-        </div>
-      </aside>
-      <div>
-        <div class="grid-cards">
-          {builds.map(build => <BuildCard build={build} />)}
-        </div>
-      </div>
+    <div style="margin-top: var(--space-8);">
+      <ExploreIsland
+        client:visible
+        initialBuilds={builds}
+        technologies={techs}
+        locale={locale}
+        labels={exploreLabels}
+      />
     </div>
   </section>
 </Page>

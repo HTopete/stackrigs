@@ -20,6 +20,11 @@ const infraLabels = {
   latency: t('infra.latency'),
   requestsPerMinute: t('infra.requestsPerMinute'),
   memoryUsage: t('infra.memoryUsage'),
+  loadAvg: t('infra.loadAvg'),
+  memTotal: t('infra.memTotal'),
+  memAvailable: t('infra.memAvailable'),
+  live: t('infra.live'),
+  connecting: t('infra.connecting'),
 };
 ---
 
@@ -36,7 +41,7 @@ const infraLabels = {
       <InfraLive client:visible labels={infraLabels} />
     </div>
     <div style="margin-top: var(--space-10);">
-      <h2>Stack</h2>
+      <h2>{t('infra.stack')}</h2>
       <div style="display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4);">
         {projectStack.map(tech => <StackTag slug={tech.slug} displayName={tech.displayName} />)}
       </div>

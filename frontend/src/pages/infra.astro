@@ -20,6 +20,11 @@ const infraLabels = {
   latency: t('infra.latency'),
   requestsPerMinute: t('infra.requestsPerMinute'),
   memoryUsage: t('infra.memoryUsage'),
+  loadAvg: t('infra.loadAvg'),
+  memTotal: t('infra.memTotal'),
+  memAvailable: t('infra.memAvailable'),
+  live: t('infra.live'),
+  connecting: t('infra.connecting'),
 };
 ---
 
@@ -43,7 +48,7 @@ const infraLabels = {
 
     <!-- Project Stack -->
     <div style="margin-top: var(--space-10);">
-      <h2>Stack</h2>
+      <h2>{t('infra.stack')}</h2>
       <div class="infra-stack-tags" style="margin-top: var(--space-4);">
         {projectStack.map(tech => (
           <StackTag slug={tech.slug} displayName={tech.displayName} />
@@ -53,7 +58,7 @@ const infraLabels = {
 
     <!-- Uptime History -->
     <div style="margin-top: var(--space-10);">
-      <h2>{t('infra.uptime')} History</h2>
+      <h2>{t('infra.uptimeHistory')}</h2>
       <div class="uptime-history" style="margin-top: var(--space-4);">
         <div class="uptime-bar">
           {Array.from({ length: 30 }, (_, i) => {
@@ -61,15 +66,15 @@ const infraLabels = {
             return (
               <div
                 class={`uptime-day ${isDown ? 'uptime-day-down' : 'uptime-day-up'}`}
-                title={`Day ${30 - i}: ${isDown ? 'Partial outage' : '100% uptime'}`}
-                aria-label={`Day ${30 - i}: ${isDown ? 'Partial outage' : '100% uptime'}`}
+                title={`Day ${30 - i}: ${isDown ? t('infra.partialOutage') : t('infra.fullUptime')}`}
+                aria-label={`Day ${30 - i}: ${isDown ? t('infra.partialOutage') : t('infra.fullUptime')}`}
               />
             );
           })}
         </div>
         <div class="uptime-labels">
-          <span class="text-muted font-mono" style="font-size: var(--font-size-xs);">30 days ago</span>
-          <span class="text-muted font-mono" style="font-size: var(--font-size-xs);">Today</span>
+          <span class="text-muted font-mono" style="font-size: var(--font-size-xs);">{t('infra.daysAgo')}</span>
+          <span class="text-muted font-mono" style="font-size: var(--font-size-xs);">{t('infra.today')}</span>
         </div>
       </div>
     </div>

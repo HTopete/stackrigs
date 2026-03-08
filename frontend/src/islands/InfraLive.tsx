@@ -18,6 +18,11 @@ interface Props {
     latency: string;
     requestsPerMinute: string;
     memoryUsage: string;
+    loadAvg: string;
+    memTotal: string;
+    memAvailable: string;
+    live: string;
+    connecting: string;
   };
 }
 
@@ -109,9 +114,9 @@ const InfraLive: FunctionComponent<Props> = ({ labels }) => {
     { label: labels.uptime, value: metrics.uptime, unit: '' },
     { label: labels.requestsPerMinute, value: String(metrics.requests_min), unit: '/min' },
     { label: labels.memoryUsage, value: memDisplay, unit: '' },
-    { label: 'Load Avg', value: metrics.load_avg, unit: '' },
-    { label: 'Mem Total', value: metrics.mem_total, unit: '' },
-    { label: 'Mem Available', value: metrics.mem_available, unit: '' },
+    { label: labels.loadAvg, value: metrics.load_avg, unit: '' },
+    { label: labels.memTotal, value: metrics.mem_total, unit: '' },
+    { label: labels.memAvailable, value: metrics.mem_available, unit: '' },
   ];
 
   return (
@@ -119,7 +124,7 @@ const InfraLive: FunctionComponent<Props> = ({ labels }) => {
       <div class="infra-status">
         <span class={`freshness-dot ${connected ? 'freshness-active' : 'freshness-archived'}`} aria-hidden="true" />
         <span class="infra-status-text" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-          {connected ? 'Live' : 'Connecting...'}
+          {connected ? labels.live : labels.connecting}
         </span>
         {metrics.timestamp && (
           <span class="infra-timestamp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginLeft: 'var(--space-2)' }}>
