@@ -21,6 +21,11 @@ interface Props {
   placeholder: string;
   noResultsText: string;
   loadingText: string;
+  groupLabels?: {
+    builders: string;
+    builds: string;
+    technologies: string;
+  };
 }
 
 function mapBackendToItems(data: BackendSearchResult, locale: string): SearchResultItem[] {
@@ -60,7 +65,7 @@ function mapBackendToItems(data: BackendSearchResult, locale: string): SearchRes
   return items;
 }
 
-const SearchIsland: FunctionComponent<Props> = ({ locale, placeholder, noResultsText, loadingText }) => {
+const SearchIsland: FunctionComponent<Props> = ({ locale, placeholder, noResultsText, loadingText, groupLabels: groupLabelsProp }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResultItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -140,9 +145,9 @@ const SearchIsland: FunctionComponent<Props> = ({ locale, placeholder, noResults
   };
 
   const groupLabels: Record<string, string> = {
-    builder: 'Builders',
-    build: 'Builds',
-    technology: 'Technologies',
+    builder: groupLabelsProp?.builders || 'Builders',
+    build: groupLabelsProp?.builds || 'Builds',
+    technology: groupLabelsProp?.technologies || 'Technologies',
   };
 
   let globalIndex = -1;

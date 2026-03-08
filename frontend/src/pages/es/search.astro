@@ -16,7 +16,7 @@ const suggestedSearches = ['React', 'Go', 'SQLite', 'Rust', 'Astro', 'Docker'];
   <section class="page-section search-page">
     <h1>{t('nav.search')}</h1>
     <p class="text-secondary" style="margin-top: var(--space-2);">
-      Prueba buscando React, Supabase, o un nombre de builder
+      {t('search.hint')}
     </p>
     <div style="margin-top: var(--space-8);">
       <SearchIsland
@@ -25,11 +25,16 @@ const suggestedSearches = ['React', 'Go', 'SQLite', 'Rust', 'Astro', 'Docker'];
         placeholder={t('search.placeholder')}
         noResultsText={t('common.noResults')}
         loadingText={t('common.loading')}
+        groupLabels={{
+          builders: t('search.groupBuilders'),
+          builds: t('search.groupBuilds'),
+          technologies: t('search.groupTechnologies'),
+        }}
       />
     </div>
 
     <div class="search-suggestions">
-      <p class="search-suggestions-label font-mono">Popular</p>
+      <p class="search-suggestions-label font-mono">{t('search.popular')}</p>
       <div class="search-suggestions-list">
         {suggestedSearches.map(term => (
           <a href={localePath(locale, `/stack/${term.toLowerCase()}`)} class="tag" data-astro-prefetch>

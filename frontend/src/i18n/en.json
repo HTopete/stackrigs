@@ -41,14 +41,30 @@
     "pivot": "Pivot"
   },
   "search": {
-    "placeholder": "Search by technology, builder, or project..."
+    "placeholder": "Search by technology, builder, or project...",
+    "hint": "Try searching for React, Supabase, or a builder name",
+    "popular": "Popular",
+    "groupBuilders": "Builders",
+    "groupBuilds": "Builds",
+    "groupTechnologies": "Technologies"
   },
   "infra": {
     "uptime": "Uptime",
     "latency": "Latency",
     "requestsPerMinute": "Requests per minute",
     "memoryUsage": "Memory usage",
-    "hostingNote": "This page runs on a Raspberry Pi 5 in Mazatlan, Mexico"
+    "hostingNote": "This page runs on a Raspberry Pi 5 in Mazatlan, Mexico",
+    "stack": "Stack",
+    "uptimeHistory": "Uptime History",
+    "daysAgo": "30 days ago",
+    "today": "Today",
+    "fullUptime": "100% uptime",
+    "partialOutage": "Partial outage",
+    "live": "Live",
+    "connecting": "Connecting...",
+    "loadAvg": "Load Avg",
+    "memTotal": "Mem Total",
+    "memAvailable": "Mem Available"
   },
   "common": {
     "showMore": "Show more",
@@ -147,6 +163,27 @@
     "loginRequired": "You need to sign in to create a build.",
     "success": "Build saved!",
     "error": "Something went wrong. Please try again."
+  },
+  "signin": {
+    "title": "Sign in to StackRigs",
+    "description": "Sign in to StackRigs to share your build log.",
+    "heading": "Sign in to StackRigs",
+    "subtitle": "Share your build log with the world.",
+    "passkeyButton": "Sign in with Passkey",
+    "githubButton": "Sign in with GitHub",
+    "noAccount": "Don't have an account?",
+    "requestInvite": "Request an invitation",
+    "errorPasskeyStart": "Could not start passkey authentication. Please try again.",
+    "errorAuthFailed": "Authentication failed. Please try again.",
+    "errorNotAvailable": "Passkey authentication is not available on this device."
+  },
+  "buildLog2": {
+    "updates": "Updates",
+    "hosting": "Hosting",
+    "database": "Database",
+    "cdn": "CDN",
+    "cicd": "CI/CD",
+    "monitoring": "Monitoring"
   },
   "errors": {
     "notFound": "Not found",

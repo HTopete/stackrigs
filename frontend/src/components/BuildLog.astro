@@ -86,31 +86,31 @@ const updateTypeLabels: Record<string, string> = {
         <dl class="build-log-dl">
           {build.infrastructure.hosting && (
             <>
-              <dt>Hosting</dt>
+              <dt>{t('buildLog2.hosting')}</dt>
               <dd>{build.infrastructure.hosting}</dd>
             </>
           )}
           {build.infrastructure.database && (
             <>
-              <dt>Database</dt>
+              <dt>{t('buildLog2.database')}</dt>
               <dd>{build.infrastructure.database}</dd>
             </>
           )}
           {build.infrastructure.cdn && (
             <>
-              <dt>CDN</dt>
+              <dt>{t('buildLog2.cdn')}</dt>
               <dd>{build.infrastructure.cdn}</dd>
             </>
           )}
           {build.infrastructure.cicd && (
             <>
-              <dt>CI/CD</dt>
+              <dt>{t('buildLog2.cicd')}</dt>
               <dd>{build.infrastructure.cicd}</dd>
             </>
           )}
           {build.infrastructure.monitoring && (
             <>
-              <dt>Monitoring</dt>
+              <dt>{t('buildLog2.monitoring')}</dt>
               <dd>{build.infrastructure.monitoring}</dd>
             </>
           )}
@@ -170,7 +170,7 @@ const updateTypeLabels: Record<string, string> = {
   <!-- Build Updates Timeline -->
   {build.updates && build.updates.length > 0 && (
     <section class="build-log-timeline" aria-label="Build updates timeline">
-      <h2>Updates</h2>
+      <h2>{t('buildLog2.updates')}</h2>
       <div class="timeline">
         {build.updates.map(entry => (
           <div class={`update-entry update-${entry.type}`}>
