@@ -25,8 +25,11 @@ type Config struct {
 	SessionSecret string
 	SessionMaxAge int // seconds
 
-	// Base URL for badge generation and redirects
+	// Base URL of the Go API (used internally)
 	BaseURL string
+
+	// Frontend URL for post-auth redirects (e.g. https://stackrigs.com)
+	FrontendURL string
 
 	// CookieDomain sets the Domain attribute on session cookies.
 	// Use ".stackrigs.com" in production so cookies are shared
@@ -52,7 +55,8 @@ func Load() *Config {
 		SessionSecret: getEnv("SESSION_SECRET", "change-me-in-production-32chars!"),
 		SessionMaxAge: 86400 * 7, // 7 days
 
-		BaseURL: getEnv("BASE_URL", "http://localhost:8080"),
+		BaseURL:     getEnv("BASE_URL", "http://localhost:8080"),
+		FrontendURL: getEnv("FRONTEND_URL", getEnv("BASE_URL", "http://localhost:8080")),
 
 		CookieDomain: getEnv("COOKIE_DOMAIN", ""),
 	}
