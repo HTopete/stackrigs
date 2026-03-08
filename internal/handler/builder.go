@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/htopete/stackrigs/internal/middleware"
 	"github.com/htopete/stackrigs/internal/model"
 	"github.com/htopete/stackrigs/internal/store"
 )
@@ -78,4 +79,38 @@ func (h *BuilderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusCreated, builder)
+}
+
+func (h *BuilderHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	builder := middleware.BuilderFromContext(r.Context())
+	if builder == nil {
+		writeError(w, http.StatusUnauthorized, "authentication required")
+		return
+	}
+
+	var req struct {
+		DisplayName string `json:"display_name"`
+		Bio         string `json:"bio"`
+		Website     string `json:"website"`
+		TwitterURL  string `json:"twitter_url"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	// Keep existing values if not provided
+	displayName := req.DisplayName
+	if displayName == "" {
+		displayName = builder.DisplayName
+	}
+
+	updated, err := h.store.Update(builder.ID, displayName, req.Bio, req.Website, req.TwitterURL)
+	if err != nil {
+		h.logger.Error("failed to update builder", "error", err)
+		writeError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, updated)
 }

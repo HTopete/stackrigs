@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -82,6 +83,8 @@ func main() {
 	technologyH := handler.NewTechnologyHandler(technologyStore, logger)
 	searchH := handler.NewSearchHandler(searchStore, logger)
 	badgeH := handler.NewBadgeHandler(builderStore, buildStore, logger)
+	uploadDir := filepath.Join(filepath.Dir(cfg.DatabasePath), "uploads")
+	uploadH := handler.NewUploadHandler(builderStore, uploadDir, cfg.BaseURL, logger)
 
 	infraH.StartUptimeTracker()
 
@@ -116,6 +119,9 @@ func main() {
 		r.Get("/{handle}.svg", badgeH.ProfileBadge)
 		r.Get("/{handle}/{buildId}.svg", badgeH.BuildBadge)
 	})
+
+	// Serve uploaded files (avatars, etc.)
+	r.Get("/uploads/*", uploadH.ServeUploads)
 
 	// API routes
 	r.Route("/api", func(r chi.Router) {
@@ -167,8 +173,10 @@ func main() {
 			r.Use(authMW.RequireAuth)
 
 			r.Post("/builders", builderH.Create)
+			r.Put("/builders/me", builderH.UpdateProfile)
 			r.Post("/builds", buildH.Create)
 			r.Put("/builds/{id}", buildH.Update)
+			r.Post("/upload/avatar", uploadH.UploadAvatar)
 		})
 	})
 

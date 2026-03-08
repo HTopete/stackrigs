@@ -3,7 +3,7 @@ import Page from '../../layouts/Page.astro';
 import BuildLog from '../../components/BuildLog.astro';
 import EmbedPreview from '../../components/EmbedPreview.astro';
 import { detectLocaleFromPath, useTranslations, localePath } from '../../i18n/index';
-import { getBuild, getAllBuildIds } from '../../lib/api';
+import { getBuild, getAllBuildIds, API_BASE } from '../../lib/api';
 
 const { id } = Astro.params;
 const locale = detectLocaleFromPath(Astro.url.pathname);
@@ -31,6 +31,17 @@ export async function getStaticPaths() {
       </a>
     </div>
 
+    <!-- Edit button (shown only to build owner via client-side check) -->
+    <a
+      id="edit-build-btn"
+      href={localePath(locale, `/build/${id}/edit`)}
+      class="btn btn-sm"
+      style="display: none; margin-bottom: var(--space-4);"
+      data-build-id={id}
+    >
+      {t('buildForm.editTitle')}
+    </a>
+
     <!-- Full Build Log -->
     <BuildLog build={build} />
 
@@ -40,6 +51,25 @@ export async function getStaticPaths() {
     </div>
 
   </section>
+
+  <script define:vars={{ editBuildId: id, editApiBase: API_BASE }}>
+    document.addEventListener('astro:page-load', async () => {
+      const btn = document.getElementById('edit-build-btn');
+      if (!btn) return;
+      try {
+        const base = editApiBase || '';
+        const meRes = await fetch(`${base}/api/auth/me`, { credentials: 'include' });
+        if (!meRes.ok) return;
+        const me = await meRes.json();
+        const buildRes = await fetch(`${base}/api/builds/${editBuildId}`);
+        if (!buildRes.ok) return;
+        const build = await buildRes.json();
+        if (me.builder?.id === build.builder_id) {
+          btn.style.display = 'inline-flex';
+        }
+      } catch {}
+    });
+  </script>
 </Page>
 
 <style>

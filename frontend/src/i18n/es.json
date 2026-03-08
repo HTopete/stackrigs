@@ -7,7 +7,9 @@
     "infra": "Infra",
     "signIn": "Iniciar sesion",
     "signOut": "Cerrar sesion",
-    "myProfile": "Mi Perfil"
+    "myProfile": "Mi Perfil",
+    "newBuild": "Nuevo Build",
+    "editProfile": "Editar Perfil"
   },
   "buildLog": {
     "stack": "Stack",
@@ -186,6 +188,20 @@
     "cdn": "CDN",
     "cicd": "CI/CD",
     "monitoring": "Monitoreo"
+  },
+  "settings": {
+    "title": "Editar Perfil",
+    "displayName": "Nombre",
+    "bio": "Bio",
+    "website": "Sitio web",
+    "twitter": "X / Twitter",
+    "avatar": "Avatar",
+    "save": "Guardar Cambios",
+    "saving": "Guardando...",
+    "saved": "Perfil actualizado!",
+    "error": "Algo salio mal. Intenta de nuevo.",
+    "loginRequired": "Necesitas iniciar sesion para editar tu perfil.",
+    "changeAvatar": "Cambiar Avatar"
   },
   "errors": {
     "notFound": "No encontrado",
