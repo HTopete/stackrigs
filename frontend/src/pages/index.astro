@@ -10,7 +10,11 @@ const t = useTranslations(locale);
 
 const { builds: recentBuilds } = await getBuilds({ limit: 6, sort: 'updated' });
 const allStacks = await getTechnologies();
-const popularStacks = allStacks.filter(s => s.count > 0);
+const popularStacks = allStacks
+  .filter(s => s.count > 0)
+  .sort((a, b) => b.count - a.count)
+  .slice(0, 18);
+const maxCount = popularStacks[0]?.count || 1;
 ---
 
 <Page
@@ -41,12 +45,21 @@ const popularStacks = allStacks.filter(s => s.count > 0);
   <section class="page-section" aria-labelledby="popular-stacks-title">
     <h2 id="popular-stacks-title">{t('hero.popularStacks')}</h2>
     <div class="popular-stacks" style="margin-top: var(--space-6);">
-      {popularStacks.map(stack => (
-        <a href={localePath(locale, `/stack/${stack.slug}`)} class="popular-stack-item" data-astro-prefetch>
-          <span class="popular-stack-name">{stack.displayName}</span>
-          <span class="popular-stack-count font-mono text-muted">{stack.count} {stack.count === 1 ? t('stack.build') : t('stack.builds')}</span>
-        </a>
-      ))}
+      {popularStacks.map((stack, i) => {
+        const weight = stack.count / maxCount;
+        const tier = i < 3 ? 'top' : i < 8 ? 'mid' : 'base';
+        return (
+          <a
+            href={localePath(locale, `/stack/${stack.slug}`)}
+            class={`popular-stack-item popular-stack-item--${tier}`}
+            data-astro-prefetch
+            style={`--stack-weight: ${weight}`}
+          >
+            <span class="popular-stack-name">{stack.displayName}</span>
+            <span class="popular-stack-count font-mono">{stack.count}</span>
+          </a>
+        );
+      })}
     </div>
   </section>
 
@@ -63,12 +76,12 @@ const popularStacks = allStacks.filter(s => s.count > 0);
   .popular-stacks {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-3);
+    gap: var(--space-2);
   }
 
   @media (min-width: 640px) {
     .popular-stacks {
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     }
   }
 
@@ -80,23 +93,53 @@ const popularStacks = allStacks.filter(s => s.count > 0);
     background: var(--color-surface);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-card);
-    transition:
-      box-shadow var(--duration-normal) var(--ease-out),
-      transform var(--duration-normal) var(--ease-out);
+    border-left: 3px solid transparent;
+    transition: border-color var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-normal) var(--ease-out);
   }
 
   .popular-stack-item:hover {
-    box-shadow: var(--shadow-hover);
-    transform: translateY(-1px);
+    border-left-color: var(--color-accent);
+    box-shadow: var(--shadow-card), inset 0 0 0 1px var(--color-border);
   }
 
-  .popular-stack-name {
+  /* Top 3 — biggest, prominent */
+  .popular-stack-item--top {
+    padding: var(--space-4) var(--space-5);
+    background: var(--color-surface-raised);
+  }
+
+  .popular-stack-item--top .popular-stack-name {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+  }
+
+  .popular-stack-item--top .popular-stack-count {
+    font-size: var(--font-size-sm);
+    color: var(--color-accent);
+  }
+
+  /* Mid tier */
+  .popular-stack-item--mid .popular-stack-name {
     font-weight: 500;
     font-size: var(--font-size-sm);
   }
 
-  .popular-stack-count {
+  .popular-stack-item--mid .popular-stack-count {
     font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+  }
+
+  /* Base tier */
+  .popular-stack-item--base .popular-stack-name {
+    font-weight: 400;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+  }
+
+  .popular-stack-item--base .popular-stack-count {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
   }
 
   .pi-note {

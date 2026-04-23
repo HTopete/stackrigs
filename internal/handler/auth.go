@@ -538,8 +538,12 @@ func (h *AuthHandler) GitHubCallback(w http.ResponseWriter, r *http.Request) {
 
 	h.setSessionCookie(w, sessionID)
 
-	redirectURL := h.cfg.FrontendURL + "/?auth=success"
-	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
+	// New builders go to /new-build for onboarding; returning builders to home.
+	redirectPath := "/?auth=success"
+	if created {
+		redirectPath = "/new-build?welcome=1"
+	}
+	http.Redirect(w, r, h.cfg.FrontendURL+redirectPath, http.StatusSeeOther)
 }
 
 // ---- Session Management ----

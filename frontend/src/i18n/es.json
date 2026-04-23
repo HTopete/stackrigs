@@ -31,6 +31,7 @@
     "bio": "Bio",
     "builds": "Builds",
     "noBuilds": "Aún no hay builds.",
+    "noBuildsOwnerCta": "Crea tu primer build log →",
     "memberSince": "Miembro desde",
     "lastActive": "Última actividad"
   },
@@ -93,10 +94,10 @@
     "builtWith": "Hecho con Go + Astro + SQLite. Corriendo en una Raspberry Pi 5 en Mazatlán."
   },
   "hero": {
-    "title": "Un índice abierto de lo que los developers realmente construyen.",
+    "title": "Muestra tu build, no tu marca.",
     "subtitle": "Stacks reales. Infraestructura real. Sin ruido.",
-    "cta": "Explorar Builds",
-    "ctaSecondary": "Muestra Tu Build",
+    "cta": "Explorar stacks reales",
+    "ctaSecondary": "Comparte tu build log",
     "recentBuilds": "Builds Recientes",
     "popularStacks": "Stacks Populares",
     "piNote": "Corriendo en una Raspberry Pi 5"

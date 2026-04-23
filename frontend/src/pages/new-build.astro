@@ -12,6 +12,9 @@ const t = useTranslations(locale);
   description="Create a new build log on StackRigs."
 >
   <section class="page-section" style="max-width: 720px; margin: 0 auto;">
+    <div id="welcome-banner" class="welcome-banner" hidden>
+      <strong>Welcome to StackRigs.</strong> A build log is a living document — start with a snapshot of today and update it as your stack evolves.
+    </div>
     <BuildFormIsland
       client:load
       mode="create"
@@ -54,8 +57,32 @@ const t = useTranslations(locale);
   </section>
 </Page>
 
+<script>
+  document.addEventListener('astro:page-load', () => {
+    const banner = document.getElementById('welcome-banner');
+    if (banner && new URLSearchParams(window.location.search).has('welcome')) {
+      banner.hidden = false;
+    }
+  });
+</script>
+
 <style>
   .page-section {
     padding-block: var(--space-8);
+  }
+
+  .welcome-banner {
+    padding: var(--space-4) var(--space-5);
+    margin-bottom: var(--space-6);
+    background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
+    border-left: 3px solid var(--color-accent);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+  }
+
+  .welcome-banner strong {
+    color: var(--color-text);
   }
 </style>

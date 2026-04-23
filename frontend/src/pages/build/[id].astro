@@ -46,12 +46,7 @@ export async function getStaticPaths() {
     <!-- Full Build Log -->
     <BuildLog build={build} />
 
-    <!-- Embed Preview -->
-    <div style="margin-top: var(--space-10);">
-      <EmbedPreview handle={build.builderHandle} buildId={build.id} />
-    </div>
-
-    <!-- Build Updates Timeline -->
+    <!-- Build Updates Timeline (the product differentiator — before embed) -->
     <div style="margin-top: var(--space-10);">
       <BuildUpdatesIsland
         client:visible
@@ -80,6 +75,11 @@ export async function getStaticPaths() {
           },
         }}
       />
+    </div>
+
+    <!-- Embed Preview (power-user feature — after the timeline) -->
+    <div style="margin-top: var(--space-10);">
+      <EmbedPreview handle={build.builderHandle} buildId={build.id} />
     </div>
 
   </section>

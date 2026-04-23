@@ -147,9 +147,9 @@ const updateTypeLabels: Record<string, string> = {
     </details>
   )}
 
-  <!-- What Broke -->
+  <!-- What Broke — open by default: honesty is the differentiator -->
   {build.whatBroke && (
-    <details class="collapsible">
+    <details class="collapsible" open>
       <summary class="section-broke">{t('buildLog.whatBroke')}</summary>
       <div class="collapsible-content section-broke-content">
         <p>{build.whatBroke}</p>
@@ -157,9 +157,9 @@ const updateTypeLabels: Record<string, string> = {
     </details>
   )}
 
-  <!-- What I'd Change -->
+  <!-- What I'd Change — open by default -->
   {build.whatIdChange && (
-    <details class="collapsible">
+    <details class="collapsible" open>
       <summary class="section-change">{t('buildLog.whatIdChange')}</summary>
       <div class="collapsible-content section-change-content">
         <p>{build.whatIdChange}</p>
