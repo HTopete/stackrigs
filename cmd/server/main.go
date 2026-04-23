@@ -84,7 +84,7 @@ func main() {
 	searchH := handler.NewSearchHandler(searchStore, logger)
 	badgeH := handler.NewBadgeHandler(builderStore, buildStore, logger)
 	uploadDir := filepath.Join(filepath.Dir(cfg.DatabasePath), "uploads")
-	uploadH := handler.NewUploadHandler(builderStore, uploadDir, cfg.BaseURL, logger)
+	uploadH := handler.NewUploadHandler(builderStore, buildStore, uploadDir, cfg.BaseURL, logger)
 
 	infraH.StartUptimeTracker()
 
@@ -180,6 +180,7 @@ func main() {
 			r.Delete("/builds/{id}/updates/{updateId}", buildH.DeleteUpdate)
 			r.Delete("/builds/{id}", buildH.Delete)
 			r.Post("/upload/avatar", uploadH.UploadAvatar)
+			r.Post("/upload/cover/{buildId}", uploadH.UploadCover)
 		})
 	})
 

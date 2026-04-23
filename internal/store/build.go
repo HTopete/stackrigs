@@ -229,6 +229,18 @@ func (s *BuildStore) Update(id int64, req model.UpdateBuildRequest) (*model.Buil
 	return s.GetByID(id)
 }
 
+// UpdateCoverImage sets the cover_image field for a build directly.
+func (s *BuildStore) UpdateCoverImage(buildID int64, url string) error {
+	_, err := s.db.Exec(
+		"UPDATE builds SET cover_image = ?, updated_at = ? WHERE id = ?",
+		url, time.Now().UTC(), buildID,
+	)
+	if err != nil {
+		return fmt.Errorf("updating cover image: %w", err)
+	}
+	return nil
+}
+
 // CountByBuilder returns the total number of builds for a given builder.
 func (s *BuildStore) CountByBuilder(builderID int64) (int, error) {
 	var count int

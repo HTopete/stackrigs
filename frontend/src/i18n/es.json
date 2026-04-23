@@ -165,6 +165,9 @@
     "submit": "Crear Build",
     "submitEdit": "Guardar Cambios",
     "saving": "Guardando...",
+    "coverImage": "Imagen de portada",
+    "changeCover": "Cambiar portada",
+    "removeCover": "Eliminar portada",
     "loginRequired": "Necesitas iniciar sesión para crear un build.",
     "success": "¡Build guardado!",
     "error": "Algo salió mal. Inténtalo de nuevo."

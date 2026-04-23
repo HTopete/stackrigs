@@ -73,6 +73,7 @@ export interface BuildCardData {
   whatWorks?: string;
   lastUpdated: string;
   builderHandle?: string;
+  coverImage?: string;
 }
 
 export interface BuildDetailData extends BuildCardData {
@@ -119,6 +120,7 @@ function toBuildCard(b: APIBuild): BuildCardData {
     whatWorks: b.what_works || undefined,
     lastUpdated: b.updated_at,
     builderHandle: b.builder?.handle,
+    coverImage: b.cover_image || undefined,
   };
 }
 

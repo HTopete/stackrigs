@@ -40,6 +40,8 @@ interface Props {
     whatBrokePlaceholder: string;
     whatIdChange: string;
     whatIdChangePlaceholder: string;
+    coverImage: string;
+    changeCover: string;
     submit: string;
     submitEdit: string;
     saving: string;
@@ -67,6 +69,26 @@ const emptyForm: BuildData = {
   technologies: [],
 };
 
+async function resizeToWebP(file: File, maxWidth = 1200): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, maxWidth / img.width);
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { reject(new Error('no canvas context')); return; }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('canvas encode failed')), 'image/webp', 0.85);
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
 const BuildFormIsland: FunctionComponent<Props> = ({ mode, buildId, locale, labels, statusLabels }) => {
   const [form, setForm] = useState<BuildData>(emptyForm);
   const [techInput, setTechInput] = useState('');
@@ -74,6 +96,8 @@ const BuildFormIsland: FunctionComponent<Props> = ({ mode, buildId, locale, labe
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [authed, setAuthed] = useState<boolean | null>(null);
+  const [coverFile, setCoverFile] = useState<Blob | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' })
@@ -127,6 +151,29 @@ const BuildFormIsland: FunctionComponent<Props> = ({ mode, buildId, locale, labe
     setForm(prev => ({ ...prev, technologies: techs }));
   };
 
+  const handleCoverChange = async (e: Event) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    try {
+      const blob = await resizeToWebP(file, 1200);
+      setCoverFile(blob);
+      setCoverPreview(URL.createObjectURL(blob));
+    } catch {
+      setError('Could not process the image. Try a different file.');
+    }
+  };
+
+  const uploadCover = async (targetBuildId: string | number): Promise<void> => {
+    if (!coverFile) return;
+    const fd = new FormData();
+    fd.append('cover', coverFile, 'cover.webp');
+    await fetch(`${API_BASE}/api/upload/cover/${targetBuildId}`, {
+      method: 'POST',
+      credentials: 'include',
+      body: fd,
+    });
+  };
+
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
     setSaving(true);
@@ -178,8 +225,12 @@ const BuildFormIsland: FunctionComponent<Props> = ({ mode, buildId, locale, labe
       }
 
       const created = await res.json();
-      setSuccess(true);
 
+      // Upload cover if one was selected — use new build ID for create mode
+      const targetId = mode === 'edit' ? buildId! : String(created.id);
+      await uploadCover(targetId);
+
+      setSuccess(true);
       setTimeout(() => {
         const prefix = locale === 'en' ? '' : `/${locale}`;
         window.location.href = `${prefix}/build/${created.id}`;
@@ -200,6 +251,23 @@ const BuildFormIsland: FunctionComponent<Props> = ({ mode, buildId, locale, labe
 
       {error && <div class="build-form-error" role="alert">{error}</div>}
       {success && <div class="build-form-success" role="status">{labels.success}</div>}
+
+      <div class="build-form-field build-form-cover">
+        <label for="bf-cover">{labels.coverImage}</label>
+        {coverPreview && (
+          <img src={coverPreview} alt="Cover preview" class="cover-preview" />
+        )}
+        <label for="bf-cover" class="btn btn-secondary cover-upload-btn">
+          {coverPreview ? labels.changeCover : labels.coverImage}
+        </label>
+        <input
+          id="bf-cover"
+          type="file"
+          accept="image/webp,image/jpeg,image/png"
+          onChange={handleCoverChange}
+          style="position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden;"
+        />
+      </div>
 
       <div class="build-form-field">
         <label for="bf-name">{labels.name} *</label>

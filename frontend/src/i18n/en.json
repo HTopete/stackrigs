@@ -165,6 +165,9 @@
     "submit": "Create Build",
     "submitEdit": "Save Changes",
     "saving": "Saving...",
+    "coverImage": "Cover Image",
+    "changeCover": "Change Cover",
+    "removeCover": "Remove Cover",
     "loginRequired": "You need to sign in to create a build.",
     "success": "Build saved!",
     "error": "Something went wrong. Please try again."

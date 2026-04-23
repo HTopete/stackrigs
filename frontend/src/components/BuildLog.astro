@@ -34,6 +34,7 @@ interface Build {
   whatIdChange?: string;
   updates?: UpdateEntry[];
   lastUpdated: string;
+  coverImage?: string;
 }
 
 interface Props {
@@ -55,6 +56,16 @@ const updateTypeLabels: Record<string, string> = {
 ---
 
 <article class="build-log" aria-label={`Build log for ${build.name}`}>
+  {build.coverImage && (
+    <div class="build-log-cover">
+      <img
+        src={build.coverImage}
+        alt={`Cover image for ${build.name}`}
+        loading="eager"
+        decoding="async"
+      />
+    </div>
+  )}
   <header class="build-log-header">
     <h1>{build.name}</h1>
     {build.tagline && <p class="build-log-tagline">{build.tagline}</p>}
@@ -190,6 +201,20 @@ const updateTypeLabels: Record<string, string> = {
 </article>
 
 <style>
+  .build-log-cover {
+    margin-bottom: var(--space-8);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    aspect-ratio: 16 / 6;
+  }
+
+  .build-log-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
   .build-log-header {
     margin-bottom: var(--space-8);
   }
