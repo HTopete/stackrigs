@@ -91,7 +91,7 @@ type Technology struct {
 }
 
 type BuildListParams struct {
-	Tech    string
+	Techs   []string // multiple tech slugs — joined with OR in the query
 	Status  string
 	Sort    string
 	Builder string

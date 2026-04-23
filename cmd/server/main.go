@@ -79,7 +79,7 @@ func main() {
 	uptimeStore := store.NewUptimeStore(db)
 	infraH := handler.NewInfraHandler(uptimeStore)
 	builderH := handler.NewBuilderHandler(builderStore, logger)
-	buildH := handler.NewBuildHandler(buildStore, logger)
+	buildH := handler.NewBuildHandler(buildStore, searchStore, logger)
 	technologyH := handler.NewTechnologyHandler(technologyStore, logger)
 	searchH := handler.NewSearchHandler(searchStore, logger)
 	badgeH := handler.NewBadgeHandler(builderStore, buildStore, logger)

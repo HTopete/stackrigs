@@ -164,7 +164,8 @@ func (s *AuthStore) UpdateCredentialSignCount(credentialID string, newCount uint
 // ---- GitHub Connections ----
 
 // FindOrCreateBuilderByGitHub finds an existing builder by GitHub ID or creates a new one.
-// If the builder already exists, it updates the access token and avatar.
+// If the builder already exists, it updates the avatar. The accessToken parameter is
+// intentionally not persisted — it is only used at login time and discarded afterwards.
 // Returns the builder ID and whether a new builder was created.
 func (s *AuthStore) FindOrCreateBuilderByGitHub(githubID int64, username, displayName, avatarURL, accessToken string) (int64, bool, error) {
 	// Check if a GitHub connection exists
@@ -174,10 +175,10 @@ func (s *AuthStore) FindOrCreateBuilderByGitHub(githubID int64, username, displa
 	).Scan(&builderID)
 
 	if err == nil {
-		// Existing connection — update token and avatar
+		// Existing connection — update avatar (token intentionally not stored)
 		_, err = s.db.Exec(
-			"UPDATE github_connections SET access_token = ?, github_avatar_url = ?, github_username = ? WHERE github_id = ?",
-			accessToken, avatarURL, username, githubID,
+			"UPDATE github_connections SET access_token = '', github_avatar_url = ?, github_username = ? WHERE github_id = ?",
+			avatarURL, username, githubID,
 		)
 		if err != nil {
 			return 0, false, fmt.Errorf("updating github connection: %w", err)
@@ -223,11 +224,11 @@ func (s *AuthStore) FindOrCreateBuilderByGitHub(githubID int64, username, displa
 		return 0, false, fmt.Errorf("getting builder id: %w", err)
 	}
 
-	// Create the GitHub connection
+	// Create the GitHub connection (token intentionally not stored — used only at login time)
 	_, err = s.db.Exec(
 		`INSERT INTO github_connections (builder_id, github_id, github_username, github_avatar_url, access_token)
-		 VALUES (?, ?, ?, ?, ?)`,
-		builderID, githubID, username, avatarURL, accessToken,
+		 VALUES (?, ?, ?, ?, '')`,
+		builderID, githubID, username, avatarURL,
 	)
 	if err != nil {
 		return 0, false, fmt.Errorf("creating github connection: %w", err)

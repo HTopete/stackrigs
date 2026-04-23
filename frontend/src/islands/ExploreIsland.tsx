@@ -48,8 +48,8 @@ const ExploreIsland: FunctionComponent<Props> = ({ initialBuilds, technologies, 
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (selectedTechs.size > 0) params.set('tech', [...selectedTechs].join(','));
-      if (selectedStatuses.size > 0) params.set('status', [...selectedStatuses].join(','));
+      for (const slug of selectedTechs) params.append('tech', slug);
+      if (selectedStatuses.size > 0) params.set('status', [...selectedStatuses][0]);
       params.set('sort', sort);
       params.set('limit', '20');
 

@@ -115,6 +115,27 @@ func (s *SearchStore) InsertIndex(entityType string, entityID int64, title, body
 	return nil
 }
 
+// UpsertBuildIndex keeps a build's FTS entry in sync after create/update.
+func (s *SearchStore) UpsertBuildIndex(buildID int64, name, description string) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return fmt.Errorf("beginning upsert transaction: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	idStr := fmt.Sprintf("%d", buildID)
+	if _, err := tx.Exec("DELETE FROM search_index WHERE entity_type = 'build' AND entity_id = ?", idStr); err != nil {
+		return fmt.Errorf("removing old build from index: %w", err)
+	}
+	if _, err := tx.Exec(
+		"INSERT INTO search_index (entity_type, entity_id, title, body) VALUES ('build', ?, ?, ?)",
+		idStr, name, description,
+	); err != nil {
+		return fmt.Errorf("inserting build into index: %w", err)
+	}
+	return tx.Commit()
+}
+
 // DeleteIndex removes an entity from the FTS5 search index.
 func (s *SearchStore) DeleteIndex(entityType string, entityID int64) error {
 	_, err := s.db.Exec(

@@ -21,9 +21,16 @@ func (s *BuildStore) List(params model.BuildListParams) ([]model.Build, int, err
 	where := []string{"1=1"}
 	args := []interface{}{}
 
-	if params.Tech != "" {
+	if len(params.Techs) == 1 {
 		where = append(where, `b.id IN (SELECT bt.build_id FROM build_technologies bt JOIN technologies t ON bt.technology_id = t.id WHERE t.slug = ?)`)
-		args = append(args, params.Tech)
+		args = append(args, params.Techs[0])
+	} else if len(params.Techs) > 1 {
+		placeholders := strings.Repeat("?,", len(params.Techs))
+		placeholders = placeholders[:len(placeholders)-1]
+		where = append(where, `b.id IN (SELECT bt.build_id FROM build_technologies bt JOIN technologies t ON bt.technology_id = t.id WHERE t.slug IN (`+placeholders+`))`)
+		for _, slug := range params.Techs {
+			args = append(args, slug)
+		}
 	}
 	if params.Status != "" {
 		where = append(where, "b.status = ?")
