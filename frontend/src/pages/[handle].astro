@@ -74,12 +74,37 @@ export async function getStaticPaths() {
           <BuildCard build={build} />
         ))}
         {builderBuilds.length === 0 && (
-          <p class="text-muted">{t('builder.noBuilds')}</p>
+          <div class="empty-state">
+            <p class="text-muted">{t('builder.noBuilds')}</p>
+            <a
+              id="no-builds-cta"
+              href={`/new-build`}
+              class="btn btn-primary"
+              style="display: none; margin-top: var(--space-4);"
+            >
+              {t('builder.noBuildsOwnerCta')}
+            </a>
+          </div>
         )}
       </div>
     </section>
   </section>
 </Page>
+
+<script define:vars={{ profileHandle: handle, apiBase: (import.meta.env.PUBLIC_API_URL || '') }}>
+  document.addEventListener('astro:page-load', async () => {
+    const cta = document.getElementById('no-builds-cta');
+    if (!cta) return;
+    try {
+      const res = await fetch(`${apiBase}/api/auth/me`, { credentials: 'include' });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data?.builder?.handle === profileHandle) {
+        cta.style.display = 'inline-flex';
+      }
+    } catch {}
+  });
+</script>
 
 <style>
   .builder-bio {

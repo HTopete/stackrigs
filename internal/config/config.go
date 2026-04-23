@@ -38,11 +38,18 @@ type Config struct {
 }
 
 func Load() *Config {
+	env := getEnv("ENV", "dev")
+	isProd := env == "prod" || env == "production"
+	allowedOrigins := parseOrigins(getEnv("ALLOWED_ORIGINS", "https://stackrigs.com,https://api.stackrigs.com,http://localhost:3000,http://localhost:5173"))
+	if isProd {
+		allowedOrigins = filterProdOrigins(allowedOrigins)
+	}
+
 	cfg := &Config{
 		Port:           getEnv("PORT", "8080"),
 		DatabasePath:   getEnv("DATABASE_PATH", "./stackrigs.db"),
-		AllowedOrigins: parseOrigins(getEnv("ALLOWED_ORIGINS", "https://stackrigs.com,https://api.stackrigs.com,http://localhost:3000,http://localhost:5173")),
-		Env:            getEnv("ENV", "dev"),
+		AllowedOrigins: allowedOrigins,
+		Env:            env,
 
 		WebAuthnDisplayName: getEnv("WEBAUTHN_DISPLAY_NAME", "StackRigs"),
 		WebAuthnRPID:        getEnv("WEBAUTHN_RP_ID", "localhost"),
@@ -72,6 +79,19 @@ func getEnv(key, fallback string) string {
 		return val
 	}
 	return fallback
+}
+
+// filterProdOrigins removes any localhost/127.0.0.1 origins so they can never
+// leak into production even if ALLOWED_ORIGINS is not explicitly set.
+func filterProdOrigins(origins []string) []string {
+	filtered := make([]string, 0, len(origins))
+	for _, o := range origins {
+		if strings.Contains(o, "localhost") || strings.Contains(o, "127.0.0.1") || strings.Contains(o, "::1") {
+			continue
+		}
+		filtered = append(filtered, o)
+	}
+	return filtered
 }
 
 func parseOrigins(raw string) []string {

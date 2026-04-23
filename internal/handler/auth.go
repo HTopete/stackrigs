@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-webauthn/webauthn/protocol"
@@ -50,6 +51,12 @@ func (u *webAuthnUser) WebAuthnIcon() string {
 	return u.builder.AvatarURL
 }
 
+// webAuthnSession wraps a SessionData with its creation time for TTL cleanup.
+type webAuthnSession struct {
+	data      *webauthn.SessionData
+	createdAt time.Time
+}
+
 // AuthHandler manages WebAuthn passkey and GitHub OAuth authentication flows.
 type AuthHandler struct {
 	authStore    *store.AuthStore
@@ -59,10 +66,10 @@ type AuthHandler struct {
 	cfg          *config.Config
 	logger       *slog.Logger
 
-	// In-memory session data for WebAuthn ceremonies (short-lived).
-	// In production, consider using a cache like Redis.
-	regSessions   map[string]*webauthn.SessionData
-	loginSessions map[string]*webauthn.SessionData
+	// In-memory session data for WebAuthn ceremonies (short-lived, 5-minute TTL).
+	sessionMu     sync.RWMutex
+	regSessions   map[string]*webAuthnSession
+	loginSessions map[string]*webAuthnSession
 }
 
 // NewAuthHandler creates an AuthHandler with WebAuthn and GitHub OAuth configured.
@@ -91,16 +98,39 @@ func NewAuthHandler(
 		Scopes:       []string{"read:user", "user:email"},
 	}
 
-	return &AuthHandler{
+	h := &AuthHandler{
 		authStore:     authStore,
 		builderStore:  builderStore,
 		webAuthn:      wa,
 		oauthConfig:   oauthCfg,
 		cfg:           cfg,
 		logger:        logger,
-		regSessions:   make(map[string]*webauthn.SessionData),
-		loginSessions: make(map[string]*webauthn.SessionData),
-	}, nil
+		regSessions:   make(map[string]*webAuthnSession),
+		loginSessions: make(map[string]*webAuthnSession),
+	}
+	go h.cleanupExpiredSessions()
+	return h, nil
+}
+
+// cleanupExpiredSessions removes stale WebAuthn ceremony sessions every minute.
+func (h *AuthHandler) cleanupExpiredSessions() {
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+	for range ticker.C {
+		cutoff := time.Now().Add(-5 * time.Minute)
+		h.sessionMu.Lock()
+		for k, s := range h.regSessions {
+			if s.createdAt.Before(cutoff) {
+				delete(h.regSessions, k)
+			}
+		}
+		for k, s := range h.loginSessions {
+			if s.createdAt.Before(cutoff) {
+				delete(h.loginSessions, k)
+			}
+		}
+		h.sessionMu.Unlock()
+	}
 }
 
 // ---- WebAuthn Registration ----
@@ -134,7 +164,9 @@ func (h *AuthHandler) BeginRegistration(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	h.regSessions[builder.Handle] = session
+	h.sessionMu.Lock()
+	h.regSessions[builder.Handle] = &webAuthnSession{data: session, createdAt: time.Now()}
+	h.sessionMu.Unlock()
 
 	writeJSON(w, http.StatusOK, options)
 }
@@ -147,12 +179,18 @@ func (h *AuthHandler) FinishRegistration(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	session, ok := h.regSessions[builder.Handle]
+	h.sessionMu.Lock()
+	entry, ok := h.regSessions[builder.Handle]
+	if ok {
+		delete(h.regSessions, builder.Handle)
+	}
+	h.sessionMu.Unlock()
+
 	if !ok {
 		writeError(w, http.StatusBadRequest, "no registration in progress")
 		return
 	}
-	delete(h.regSessions, builder.Handle)
+	session := entry.data
 
 	creds, err := h.loadCredentials(builder.ID)
 	if err != nil {
@@ -215,7 +253,9 @@ func (h *AuthHandler) BeginLogin(w http.ResponseWriter, r *http.Request) {
 		}
 
 		challengeKey := base64.RawURLEncoding.EncodeToString([]byte(session.Challenge))
-		h.loginSessions[challengeKey] = session
+		h.sessionMu.Lock()
+		h.loginSessions[challengeKey] = &webAuthnSession{data: session, createdAt: time.Now()}
+		h.sessionMu.Unlock()
 
 		writeJSON(w, http.StatusOK, map[string]interface{}{
 			"publicKey":     options,
@@ -256,7 +296,9 @@ func (h *AuthHandler) BeginLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.loginSessions[builder.Handle] = session
+	h.sessionMu.Lock()
+	h.loginSessions[builder.Handle] = &webAuthnSession{data: session, createdAt: time.Now()}
+	h.sessionMu.Unlock()
 
 	writeJSON(w, http.StatusOK, options)
 }
@@ -270,12 +312,17 @@ func (h *AuthHandler) FinishLogin(w http.ResponseWriter, r *http.Request) {
 
 	if challengeKey != "" {
 		// Discoverable credential flow
-		session, ok := h.loginSessions[challengeKey]
+		h.sessionMu.Lock()
+		entry, ok := h.loginSessions[challengeKey]
+		if ok {
+			delete(h.loginSessions, challengeKey)
+		}
+		h.sessionMu.Unlock()
 		if !ok {
 			writeError(w, http.StatusBadRequest, "no login in progress")
 			return
 		}
-		delete(h.loginSessions, challengeKey)
+		session := entry.data
 
 		parsedResponse, err := protocol.ParseCredentialRequestResponse(r)
 		if err != nil {
@@ -323,12 +370,17 @@ func (h *AuthHandler) FinishLogin(w http.ResponseWriter, r *http.Request) {
 		_ = h.authStore.UpdateCredentialSignCount(credHexID, credential.Authenticator.SignCount)
 
 	} else if handle != "" {
-		session, ok := h.loginSessions[handle]
+		h.sessionMu.Lock()
+		entry, ok := h.loginSessions[handle]
+		if ok {
+			delete(h.loginSessions, handle)
+		}
+		h.sessionMu.Unlock()
 		if !ok {
 			writeError(w, http.StatusBadRequest, "no login in progress")
 			return
 		}
-		delete(h.loginSessions, handle)
+		session := entry.data
 
 		var err error
 		builder, err = h.builderStore.GetByHandle(handle)
@@ -486,8 +538,12 @@ func (h *AuthHandler) GitHubCallback(w http.ResponseWriter, r *http.Request) {
 
 	h.setSessionCookie(w, sessionID)
 
-	redirectURL := h.cfg.FrontendURL + "/?auth=success"
-	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
+	// New builders go to /new-build for onboarding; returning builders to home.
+	redirectPath := "/?auth=success"
+	if created {
+		redirectPath = "/new-build?welcome=1"
+	}
+	http.Redirect(w, r, h.cfg.FrontendURL+redirectPath, http.StatusSeeOther)
 }
 
 // ---- Session Management ----

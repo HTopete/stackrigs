@@ -10,7 +10,7 @@
      light-dark() enables future dark mode by toggling
      color-scheme to dark on :root — zero class toggles.
      ────────────────────────────────────────────────────────── */
-  color-scheme: light;
+  color-scheme: light dark;
 
   /* ── Palette ────────────────────────────────────────────── */
   --color-bg:             light-dark(#F4F2EF, #0A0A0B);

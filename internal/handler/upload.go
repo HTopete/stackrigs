@@ -7,25 +7,30 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/htopete/stackrigs/internal/middleware"
 	"github.com/htopete/stackrigs/internal/store"
 )
 
-const avatarMaxUpload = 512 << 10 // 512 KB — client sends pre-optimised WebP
+const avatarMaxUpload = 512 << 10  // 512 KB — client sends pre-optimised WebP
+const coverMaxUpload = 2 << 20     // 2 MB
 
 type UploadHandler struct {
 	builderStore *store.BuilderStore
+	buildStore   *store.BuildStore
 	uploadDir    string
 	baseURL      string
 	logger       *slog.Logger
 }
 
-func NewUploadHandler(builderStore *store.BuilderStore, uploadDir, baseURL string, logger *slog.Logger) *UploadHandler {
+func NewUploadHandler(builderStore *store.BuilderStore, buildStore *store.BuildStore, uploadDir, baseURL string, logger *slog.Logger) *UploadHandler {
 	return &UploadHandler{
 		builderStore: builderStore,
+		buildStore:   buildStore,
 		uploadDir:    uploadDir,
 		baseURL:      baseURL,
 		logger:       logger,
@@ -119,15 +124,116 @@ func (h *UploadHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"url": avatarURL})
 }
 
+// UploadCover handles cover image uploads for builds. The client resizes and
+// encodes as WebP before uploading (Canvas API). Max 2 MB.
+// PUT /api/upload/cover/{buildId}
+func (h *UploadHandler) UploadCover(w http.ResponseWriter, r *http.Request) {
+	builder := middleware.BuilderFromContext(r.Context())
+	if builder == nil {
+		writeError(w, http.StatusUnauthorized, "authentication required")
+		return
+	}
+
+	buildIDStr := chi.URLParam(r, "buildId")
+	buildID, err := strconv.ParseInt(buildIDStr, 10, 64)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid build id")
+		return
+	}
+
+	ownerID, err := h.buildStore.GetOwnerID(buildID)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "build not found")
+		return
+	}
+	if ownerID != builder.ID {
+		writeError(w, http.StatusForbidden, "you can only upload covers for your own builds")
+		return
+	}
+
+	r.Body = http.MaxBytesReader(w, r.Body, coverMaxUpload)
+	if err := r.ParseMultipartForm(coverMaxUpload); err != nil {
+		writeError(w, http.StatusBadRequest, "file too large (max 2 MB)")
+		return
+	}
+
+	file, _, err := r.FormFile("cover")
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "missing cover file")
+		return
+	}
+	defer file.Close()
+
+	header := make([]byte, 512)
+	n, _ := file.Read(header)
+	ct := http.DetectContentType(header[:n])
+
+	var ext string
+	switch {
+	case strings.Contains(ct, "webp"):
+		ext = ".webp"
+	case strings.HasPrefix(ct, "image/jpeg"):
+		ext = ".jpg"
+	case strings.HasPrefix(ct, "image/png"):
+		ext = ".png"
+	default:
+		writeError(w, http.StatusBadRequest, "only WebP, JPEG, and PNG images are allowed")
+		return
+	}
+
+	if seeker, ok := file.(io.ReadSeeker); ok {
+		if _, err := seeker.Seek(0, io.SeekStart); err != nil {
+			writeError(w, http.StatusInternalServerError, "internal server error")
+			return
+		}
+	}
+
+	coverDir := filepath.Join(h.uploadDir, "covers")
+	if err := os.MkdirAll(coverDir, 0755); err != nil {
+		h.logger.Error("failed to create cover directory", "error", err)
+		writeError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	filename := fmt.Sprintf("%d-%d%s", buildID, time.Now().UnixMilli(), ext)
+	destPath := filepath.Join(coverDir, filename)
+
+	dst, err := os.Create(destPath)
+	if err != nil {
+		h.logger.Error("failed to create cover file", "error", err)
+		writeError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, file); err != nil {
+		h.logger.Error("failed to write cover file", "error", err)
+		writeError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	coverURL := fmt.Sprintf("%s/uploads/covers/%s", h.baseURL, filename)
+
+	if err := h.buildStore.UpdateCoverImage(buildID, coverURL); err != nil {
+		h.logger.Error("failed to update build cover", "error", err)
+		writeError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	h.logger.Info("cover uploaded", "build_id", buildID, "file", filename)
+	writeJSON(w, http.StatusOK, map[string]string{"url": coverURL})
+}
+
 // ServeUploads serves uploaded files with immutable cache headers.
 func (h *UploadHandler) ServeUploads(w http.ResponseWriter, r *http.Request) {
 	filePath := strings.TrimPrefix(r.URL.Path, "/uploads/")
 	fullPath := filepath.Join(h.uploadDir, filePath)
 
-	// Prevent directory traversal
+	// Prevent directory traversal — require trailing separator so
+	// /uploads_evil/file doesn't pass a prefix check against /uploads.
 	absUpload, _ := filepath.Abs(h.uploadDir)
 	absFile, _ := filepath.Abs(fullPath)
-	if !strings.HasPrefix(absFile, absUpload) {
+	if !strings.HasPrefix(absFile, absUpload+string(filepath.Separator)) {
 		writeError(w, http.StatusForbidden, "forbidden")
 		return
 	}

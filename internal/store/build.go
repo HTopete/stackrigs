@@ -21,9 +21,16 @@ func (s *BuildStore) List(params model.BuildListParams) ([]model.Build, int, err
 	where := []string{"1=1"}
 	args := []interface{}{}
 
-	if params.Tech != "" {
+	if len(params.Techs) == 1 {
 		where = append(where, `b.id IN (SELECT bt.build_id FROM build_technologies bt JOIN technologies t ON bt.technology_id = t.id WHERE t.slug = ?)`)
-		args = append(args, params.Tech)
+		args = append(args, params.Techs[0])
+	} else if len(params.Techs) > 1 {
+		placeholders := strings.Repeat("?,", len(params.Techs))
+		placeholders = placeholders[:len(placeholders)-1]
+		where = append(where, `b.id IN (SELECT bt.build_id FROM build_technologies bt JOIN technologies t ON bt.technology_id = t.id WHERE t.slug IN (`+placeholders+`))`)
+		for _, slug := range params.Techs {
+			args = append(args, slug)
+		}
 	}
 	if params.Status != "" {
 		where = append(where, "b.status = ?")
@@ -80,6 +87,7 @@ func (s *BuildStore) List(params model.BuildListParams) ([]model.Build, int, err
 	defer rows.Close()
 
 	builds := make([]model.Build, 0)
+	buildIndex := make(map[int64]int) // id → slice index
 	for rows.Next() {
 		var b model.Build
 		var builder model.Builder
@@ -91,12 +99,39 @@ func (s *BuildStore) List(params model.BuildListParams) ([]model.Build, int, err
 			return nil, 0, fmt.Errorf("scanning build row: %w", err)
 		}
 		b.Builder = &builder
-		techs, err := s.getTechnologiesForBuild(b.ID)
-		if err != nil {
-			return nil, 0, err
-		}
-		b.Technologies = techs
+		buildIndex[b.ID] = len(builds)
 		builds = append(builds, b)
+	}
+
+	// Batch-load all technologies in one query (eliminates N+1).
+	if len(builds) > 0 {
+		ids := make([]interface{}, len(builds))
+		placeholders := make([]string, len(builds))
+		for i, b := range builds {
+			ids[i] = b.ID
+			placeholders[i] = "?"
+		}
+		techQuery := fmt.Sprintf(
+			`SELECT bt.build_id, t.id, t.name, t.slug, t.category
+			 FROM technologies t
+			 JOIN build_technologies bt ON t.id = bt.technology_id
+			 WHERE bt.build_id IN (%s)`, strings.Join(placeholders, ","),
+		)
+		techRows, err := s.db.Query(techQuery, ids...)
+		if err != nil {
+			return nil, 0, fmt.Errorf("batch loading technologies: %w", err)
+		}
+		defer techRows.Close()
+		for techRows.Next() {
+			var buildID int64
+			var t model.Technology
+			if err := techRows.Scan(&buildID, &t.ID, &t.Name, &t.Slug, &t.Category); err != nil {
+				return nil, 0, fmt.Errorf("scanning technology row: %w", err)
+			}
+			if idx, ok := buildIndex[buildID]; ok {
+				builds[idx].Technologies = append(builds[idx].Technologies, t)
+			}
+		}
 	}
 
 	return builds, total, nil
@@ -220,6 +255,18 @@ func (s *BuildStore) Update(id int64, req model.UpdateBuildRequest) (*model.Buil
 	}
 
 	return s.GetByID(id)
+}
+
+// UpdateCoverImage sets the cover_image field for a build directly.
+func (s *BuildStore) UpdateCoverImage(buildID int64, url string) error {
+	_, err := s.db.Exec(
+		"UPDATE builds SET cover_image = ?, updated_at = ? WHERE id = ?",
+		url, time.Now().UTC(), buildID,
+	)
+	if err != nil {
+		return fmt.Errorf("updating cover image: %w", err)
+	}
+	return nil
 }
 
 // CountByBuilder returns the total number of builds for a given builder.

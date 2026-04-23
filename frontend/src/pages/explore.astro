@@ -7,9 +7,9 @@ import { getBuilds, getTechnologies } from '../lib/api';
 const locale = detectLocaleFromPath(Astro.url.pathname);
 const t = useTranslations(locale);
 
-const { builds } = await getBuilds({ limit: 20, sort: 'updated' });
+const { builds, total } = await getBuilds({ limit: 20, sort: 'updated' });
 const allTechs = await getTechnologies();
-const techs = allTechs.filter(t => t.count > 0);
+const techs = allTechs.filter(t => t.count > 0).sort((a, b) => b.count - a.count);
 
 const exploreLabels = {
   technology: t('explore.technology'),
@@ -18,6 +18,10 @@ const exploreLabels = {
   sortUpdated: t('explore.sortUpdated'),
   sortCreated: t('explore.sortCreated'),
   noBuilds: t('explore.noBuilds'),
+  clearFilters: t('explore.clearFilters'),
+  showMore: t('common.showMore'),
+  showLess: t('common.showLess'),
+  results: t('explore.results'),
   statusLabels: {
     building: t('buildLog.status.building'),
     launched: t('buildLog.status.launched'),
@@ -37,6 +41,7 @@ const exploreLabels = {
       <ExploreIsland
         client:visible
         initialBuilds={builds}
+        initialTotal={total}
         technologies={techs}
         locale={locale}
         labels={exploreLabels}

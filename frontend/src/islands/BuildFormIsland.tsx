@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useRef } from 'preact/hooks';
 import type { FunctionComponent } from 'preact';
 import { API_BASE } from '../lib/api';
 
@@ -40,6 +40,8 @@ interface Props {
     whatBrokePlaceholder: string;
     whatIdChange: string;
     whatIdChangePlaceholder: string;
+    coverImage: string;
+    changeCover: string;
     submit: string;
     submitEdit: string;
     saving: string;
@@ -67,13 +69,47 @@ const emptyForm: BuildData = {
   technologies: [],
 };
 
+async function resizeToWebP(file: File, maxWidth = 1200): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, maxWidth / img.width);
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { reject(new Error('no canvas context')); return; }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('canvas encode failed')), 'image/webp', 0.85);
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
 const BuildFormIsland: FunctionComponent<Props> = ({ mode, buildId, locale, labels, statusLabels }) => {
   const [form, setForm] = useState<BuildData>(emptyForm);
-  const [techInput, setTechInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [authed, setAuthed] = useState<boolean | null>(null);
+  const [coverFile, setCoverFile] = useState<Blob | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [allTechs, setAllTechs] = useState<Array<{ slug: string; displayName: string }>>([]);
+  const [techQuery, setTechQuery] = useState('');
+  const [techDropdownOpen, setTechDropdownOpen] = useState(false);
+  const techInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/technologies`)
+      .then(r => r.ok ? r.json() : [])
+      .then((data: any[]) => setAllTechs(
+        data.map(t => ({ slug: t.slug, displayName: t.name || t.slug }))
+      ))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' })
@@ -97,7 +133,6 @@ const BuildFormIsland: FunctionComponent<Props> = ({ mode, buildId, locale, labe
                   what_id_change: data.what_id_change || '',
                   technologies: (data.technologies || []).map((t: any) => t.slug),
                 });
-                setTechInput((data.technologies || []).map((t: any) => t.slug).join(', '));
               }
             });
         }
@@ -121,10 +156,47 @@ const BuildFormIsland: FunctionComponent<Props> = ({ mode, buildId, locale, labe
     setForm(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleTechChange = (value: string) => {
-    setTechInput(value);
-    const techs = value.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-    setForm(prev => ({ ...prev, technologies: techs }));
+  const addTech = (slug: string) => {
+    const normalized = slug.trim().toLowerCase();
+    if (!normalized || form.technologies.includes(normalized)) return;
+    setForm(prev => ({ ...prev, technologies: [...prev.technologies, normalized] }));
+    setTechQuery('');
+    setTechDropdownOpen(false);
+    techInputRef.current?.focus();
+  };
+
+  const removeTech = (slug: string) => {
+    setForm(prev => ({ ...prev, technologies: prev.technologies.filter(t => t !== slug) }));
+  };
+
+  const techSuggestions = techQuery.length > 0
+    ? allTechs.filter(t =>
+        (t.slug.includes(techQuery.toLowerCase()) || t.displayName.toLowerCase().includes(techQuery.toLowerCase())) &&
+        !form.technologies.includes(t.slug)
+      ).slice(0, 8)
+    : [];
+
+  const handleCoverChange = async (e: Event) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    try {
+      const blob = await resizeToWebP(file, 1200);
+      setCoverFile(blob);
+      setCoverPreview(URL.createObjectURL(blob));
+    } catch {
+      setError('Could not process the image. Try a different file.');
+    }
+  };
+
+  const uploadCover = async (targetBuildId: string | number): Promise<void> => {
+    if (!coverFile) return;
+    const fd = new FormData();
+    fd.append('cover', coverFile, 'cover.webp');
+    await fetch(`${API_BASE}/api/upload/cover/${targetBuildId}`, {
+      method: 'POST',
+      credentials: 'include',
+      body: fd,
+    });
   };
 
   const handleSubmit = async (e: Event) => {
@@ -178,8 +250,12 @@ const BuildFormIsland: FunctionComponent<Props> = ({ mode, buildId, locale, labe
       }
 
       const created = await res.json();
-      setSuccess(true);
 
+      // Upload cover if one was selected — use new build ID for create mode
+      const targetId = mode === 'edit' ? buildId! : String(created.id);
+      await uploadCover(targetId);
+
+      setSuccess(true);
       setTimeout(() => {
         const prefix = locale === 'en' ? '' : `/${locale}`;
         window.location.href = `${prefix}/build/${created.id}`;
@@ -200,6 +276,23 @@ const BuildFormIsland: FunctionComponent<Props> = ({ mode, buildId, locale, labe
 
       {error && <div class="build-form-error" role="alert">{error}</div>}
       {success && <div class="build-form-success" role="status">{labels.success}</div>}
+
+      <div class="build-form-field build-form-cover">
+        <label for="bf-cover">{labels.coverImage}</label>
+        {coverPreview && (
+          <img src={coverPreview} alt="Cover preview" class="cover-preview" />
+        )}
+        <label for="bf-cover" class="btn btn-secondary cover-upload-btn">
+          {coverPreview ? labels.changeCover : labels.coverImage}
+        </label>
+        <input
+          id="bf-cover"
+          type="file"
+          accept="image/webp,image/jpeg,image/png"
+          onChange={handleCoverChange}
+          style="position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden;"
+        />
+      </div>
 
       <div class="build-form-field">
         <label for="bf-name">{labels.name} *</label>
@@ -240,14 +333,64 @@ const BuildFormIsland: FunctionComponent<Props> = ({ mode, buildId, locale, labe
         </div>
 
         <div class="build-form-field">
-          <label for="bf-tech">{labels.technologies}</label>
-          <input
-            id="bf-tech"
-            type="text"
-            value={techInput}
-            onInput={(e) => handleTechChange((e.target as HTMLInputElement).value)}
-            placeholder={labels.technologiesPlaceholder}
-          />
+          <label>{labels.technologies}</label>
+          {/* Selected tech chips */}
+          {form.technologies.length > 0 && (
+            <div class="tech-chips">
+              {form.technologies.map(slug => {
+                const match = allTechs.find(t => t.slug === slug);
+                return (
+                  <span class="tech-chip" key={slug}>
+                    {match?.displayName || slug}
+                    <button
+                      type="button"
+                      class="tech-chip-remove"
+                      onClick={() => removeTech(slug)}
+                      aria-label={`Remove ${slug}`}
+                    >×</button>
+                  </span>
+                );
+              })}
+            </div>
+          )}
+          {/* Autocomplete input */}
+          <div class="tech-autocomplete">
+            <input
+              ref={techInputRef}
+              type="text"
+              value={techQuery}
+              onInput={(e) => {
+                setTechQuery((e.target as HTMLInputElement).value);
+                setTechDropdownOpen(true);
+              }}
+              onFocus={() => setTechDropdownOpen(true)}
+              onBlur={() => setTimeout(() => setTechDropdownOpen(false), 150)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && techQuery.trim()) {
+                  e.preventDefault();
+                  const exact = allTechs.find(t => t.slug === techQuery.trim().toLowerCase());
+                  addTech(exact ? exact.slug : techQuery.trim());
+                }
+              }}
+              placeholder={labels.technologiesPlaceholder}
+              autocomplete="off"
+            />
+            {techDropdownOpen && techSuggestions.length > 0 && (
+              <ul class="tech-dropdown" role="listbox">
+                {techSuggestions.map(t => (
+                  <li
+                    key={t.slug}
+                    class="tech-dropdown-item"
+                    role="option"
+                    onMouseDown={() => addTech(t.slug)}
+                  >
+                    <span class="tech-dropdown-name">{t.displayName}</span>
+                    <span class="tech-dropdown-slug font-mono">{t.slug}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           <span class="build-form-hint">{labels.technologiesHint}</span>
         </div>
       </div>

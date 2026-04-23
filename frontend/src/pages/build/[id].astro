@@ -46,7 +46,38 @@ export async function getStaticPaths() {
     <!-- Full Build Log -->
     <BuildLog build={build} />
 
-    <!-- Embed Preview -->
+    <!-- Build Updates Timeline (the product differentiator — before embed) -->
+    <div style="margin-top: var(--space-10);">
+      <BuildUpdatesIsland
+        client:visible
+        buildId={id!}
+        locale={locale}
+        labels={{
+          title: t('buildUpdates.title'),
+          addUpdate: t('buildUpdates.addUpdate'),
+          updateTitle: t('buildUpdates.updateTitle'),
+          updateTitlePlaceholder: t('buildUpdates.updateTitlePlaceholder'),
+          content: t('buildUpdates.content'),
+          contentPlaceholder: t('buildUpdates.contentPlaceholder'),
+          type: t('buildUpdates.type'),
+          submit: t('buildUpdates.submit'),
+          cancel: t('buildUpdates.cancel'),
+          saving: t('buildUpdates.saving'),
+          deleteConfirm: t('buildUpdates.deleteConfirm'),
+          noUpdates: t('buildUpdates.noUpdates'),
+          typeLabels: {
+            milestone: t('updates.milestone'),
+            stack_change: t('updates.stackChange'),
+            infra_change: t('updates.infraChange'),
+            tool_change: t('updates.toolChange'),
+            reflection: t('updates.reflection'),
+            pivot: t('updates.pivot'),
+          },
+        }}
+      />
+    </div>
+
+    <!-- Embed Preview (power-user feature — after the timeline) -->
     <div style="margin-top: var(--space-10);">
       <EmbedPreview handle={build.builderHandle} buildId={build.id} />
     </div>

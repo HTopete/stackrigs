@@ -118,13 +118,13 @@ func (rl *RateLimiter) Middleware(next http.Handler) http.Handler {
 }
 
 func extractIP(r *http.Request) string {
-	// Check X-Forwarded-For first (for reverse proxies)
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		return xff
+	// CF-Connecting-IP is set by Cloudflare Tunnel and cannot be spoofed by
+	// the client — the tunnel strips any client-sent version and sets its own.
+	// Prefer it over X-Forwarded-For, which any client can forge.
+	if cf := r.Header.Get("CF-Connecting-IP"); cf != "" {
+		return cf
 	}
-	if xri := r.Header.Get("X-Real-IP"); xri != "" {
-		return xri
-	}
+	// Fall back to direct remote address (local dev / non-Cloudflare paths).
 	ip, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return r.RemoteAddr

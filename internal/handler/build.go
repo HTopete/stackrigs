@@ -14,11 +14,12 @@ import (
 
 type BuildHandler struct {
 	store  *store.BuildStore
+	search *store.SearchStore
 	logger *slog.Logger
 }
 
-func NewBuildHandler(s *store.BuildStore, logger *slog.Logger) *BuildHandler {
-	return &BuildHandler{store: s, logger: logger}
+func NewBuildHandler(s *store.BuildStore, search *store.SearchStore, logger *slog.Logger) *BuildHandler {
+	return &BuildHandler{store: s, search: search, logger: logger}
 }
 
 func (h *BuildHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +33,7 @@ func (h *BuildHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params := model.BuildListParams{
-		Tech:    q.Get("tech"),
+		Techs:   q["tech"], // supports ?tech=go&tech=react
 		Status:  q.Get("status"),
 		Sort:    q.Get("sort"),
 		Builder: q.Get("builder"),
@@ -115,6 +116,10 @@ func (h *BuildHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := h.search.UpsertBuildIndex(build.ID, build.Name, build.Description); err != nil {
+		h.logger.Warn("failed to index new build", "error", err, "id", build.ID)
+	}
+
 	writeJSON(w, http.StatusCreated, build)
 }
 
@@ -167,6 +172,10 @@ func (h *BuildHandler) Update(w http.ResponseWriter, r *http.Request) {
 		h.logger.Error("failed to update build", "error", err, "id", id)
 		writeError(w, http.StatusInternalServerError, "internal server error")
 		return
+	}
+
+	if err := h.search.UpsertBuildIndex(build.ID, build.Name, build.Description); err != nil {
+		h.logger.Warn("failed to re-index updated build", "error", err, "id", build.ID)
 	}
 
 	writeJSON(w, http.StatusOK, build)
@@ -305,6 +314,10 @@ func (h *BuildHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		h.logger.Error("failed to delete build", "error", err, "id", id)
 		writeError(w, http.StatusInternalServerError, "internal server error")
 		return
+	}
+
+	if err := h.search.DeleteIndex("build", id); err != nil {
+		h.logger.Warn("failed to remove deleted build from index", "error", err, "id", id)
 	}
 
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})

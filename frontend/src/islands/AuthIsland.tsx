@@ -15,11 +15,12 @@ interface Props {
   signOutText: string;
   myProfileText: string;
   newBuildText: string;
+  myBuildsText: string;
   editProfileText: string;
   signInHref: string;
 }
 
-const AuthIsland: FunctionComponent<Props> = ({ locale, signInText, signOutText, myProfileText, newBuildText, editProfileText, signInHref }) => {
+const AuthIsland: FunctionComponent<Props> = ({ locale, signInText, signOutText, myProfileText, newBuildText, myBuildsText, editProfileText, signInHref }) => {
   const [builder, setBuilder] = useState<AuthBuilder | null>(null);
   const [checked, setChecked] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -101,6 +102,9 @@ const AuthIsland: FunctionComponent<Props> = ({ locale, signInText, signOutText,
           </div>
           <a href={`${prefix}/new-build`} class="auth-dropdown-item" role="menuitem">
             {newBuildText}
+          </a>
+          <a href={`${prefix}/my-builds`} class="auth-dropdown-item" role="menuitem">
+            {myBuildsText}
           </a>
           <a href={profileHref} class="auth-dropdown-item" role="menuitem">
             {myProfileText}

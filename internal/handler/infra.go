@@ -128,6 +128,10 @@ func (h *InfraHandler) InfraStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Clear the server WriteTimeout for this long-lived SSE connection.
+	rc := http.NewResponseController(w)
+	_ = rc.SetWriteDeadline(time.Time{})
+
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")

@@ -31,8 +31,20 @@
     "bio": "Bio",
     "builds": "Builds",
     "noBuilds": "No builds yet.",
+    "noBuildsOwnerCta": "Start your first build log →",
     "memberSince": "Member since",
     "lastActive": "Last active"
+  },
+  "myBuilds": {
+    "title": "My Builds",
+    "newBuild": "New Build",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this build? This cannot be undone.",
+    "noBuilds": "You haven't shared a build yet.",
+    "startCta": "Start your first build log →",
+    "loginRequired": "Sign in to see your builds.",
+    "lastUpdated": "Updated"
   },
   "updates": {
     "stackChange": "Stack Change",
@@ -93,15 +105,17 @@
     "builtWith": "Built with Go + Astro + SQLite. Running on a Raspberry Pi 5 in Mazatlan."
   },
   "hero": {
-    "title": "An open index of what builders are actually building.",
+    "title": "Show your build, not your brand.",
     "subtitle": "Real stacks. Real infra. No noise.",
-    "cta": "Explore Builds",
-    "ctaSecondary": "Show Your Build",
+    "cta": "Browse real stacks",
+    "ctaSecondary": "Share your build log",
     "recentBuilds": "Recent Builds",
     "popularStacks": "Popular Stacks",
     "piNote": "Running on a Raspberry Pi 5"
   },
   "explore": {
+    "results": "builds",
+    "clearFilters": "Clear filters",
     "title": "Explore Builds",
     "filterBy": "Filter by",
     "technology": "Technology",
@@ -164,6 +178,9 @@
     "submit": "Create Build",
     "submitEdit": "Save Changes",
     "saving": "Saving...",
+    "coverImage": "Cover Image",
+    "changeCover": "Change Cover",
+    "removeCover": "Remove Cover",
     "loginRequired": "You need to sign in to create a build.",
     "success": "Build saved!",
     "error": "Something went wrong. Please try again."

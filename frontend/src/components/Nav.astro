@@ -42,6 +42,7 @@ const navLinks = [
         signOutText={t('nav.signOut')}
         myProfileText={t('nav.myProfile')}
         newBuildText={t('nav.newBuild')}
+        myBuildsText={t('myBuilds.title')}
         editProfileText={t('nav.editProfile')}
         signInHref={localePath(locale, '/signin')}
       />
@@ -64,16 +65,7 @@ const navLinks = [
       <a href={link.href}>{link.label}</a>
     ))}
     <a href={altPath} class="locale-toggle">{altLabel}</a>
-    <AuthIsland
-      client:load
-      locale={locale}
-      signInText={t('nav.signIn')}
-      signOutText={t('nav.signOut')}
-      myProfileText={t('nav.myProfile')}
-      newBuildText={t('nav.newBuild')}
-      editProfileText={t('nav.editProfile')}
-      signInHref={localePath(locale, '/signin')}
-    />
+    <a href={localePath(locale, '/signin')} class="btn btn-primary mobile-signin-btn">{t('nav.signIn')}</a>
   </div>
 </nav>
 

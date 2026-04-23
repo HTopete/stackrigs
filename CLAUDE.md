@@ -42,12 +42,12 @@ stackrigs/
 │   │   ├── layouts/              # Base.astro
 │   │   ├── pages/                # EN routes + es/ Spanish routes
 │   │   ├── components/           # Astro components
-│   │   ├── islands/              # Preact interactive (SearchIsland, InfraLive) — 2 islands only
+│   │   ├── islands/              # Preact interactive — 8 islands (Auth, BuildForm, BuildUpdates, Explore, InfraLive, ProfileEdit, Search, Uptime)
 │   │   ├── styles/               # tokens.css + global.css (CSS 2026: @layer, container queries, light-dark())
 │   │   └── i18n/                 # en.json, es.json, index.ts
 ├── api/openapi.yaml              # API spec
 ├── ee/                           # Enterprise features (proprietary license)
-├── scripts/                      # backup.sh, deploy.sh, deploy-frontend.sh, migrate-to-vps.sh
+├── scripts/                      # backup.sh, deploy.sh, deploy-frontend.sh, migrate-to-vps.sh, setup-pi.sh, seed-first-build.sh, update-build-1.sh
 ├── .github/
 │   ├── workflows/ci.yml          # PR checks: go lint/vet/test, frontend build, Docker dry run
 │   ├── workflows/deploy.yml      # Deploy: lint → Docker/GHCR → Cloudflare Pages → SSH deploy
@@ -78,7 +78,7 @@ make lint             # Run Go vet
 - **Fonts:** DM Serif Display (headings) + DM Sans (body) + DM Mono (code/handles/tags)
 - **Palette:** Warm off-white #F4F2EF, forest-teal accent #5C7C6E, terracotta #8A6858, olive #8A8458
 - **Cards:** Specular highlight top-border, ring shadow (no CSS border), hover lift 2px
-- **CSS:** @layer cascade, container queries (not media queries), light-dark() ready, fluid clamp() typography
+- **CSS:** @layer cascade, media queries for layout (container queries can't self-reference), light-dark() ready, fluid clamp() typography
 
 ## API Endpoints
 
@@ -96,11 +96,18 @@ GET    /api/auth/me                   # Current builder
 
 GET    /api/builders/:handle          # Builder profile
 POST   /api/builders                  # Create builder (requires invite)
+PUT    /api/builders/me               # Update own profile (auth required)
 
 GET    /api/builds                    # List builds (?tech=&status=&sort=&builder=)
 GET    /api/builds/:id                # Build detail + updates
 POST   /api/builds                    # Create build (auth required)
 PUT    /api/builds/:id                # Update build (owner only)
+DELETE /api/builds/:id                # Delete build + cascade (owner only)
+POST   /api/builds/:id/updates       # Add milestone/update (owner only)
+DELETE /api/builds/:id/updates/:uid   # Delete update (owner only)
+
+POST   /api/upload/avatar             # Upload avatar (auth, max 512KB, WebP preferred)
+GET    /uploads/*                     # Serve uploaded files (immutable cache)
 
 GET    /api/technologies              # List with build_count
 GET    /api/technologies/:slug        # Builds using this tech
@@ -145,6 +152,12 @@ GET    /badge/:handle/:buildId.svg    # Build-specific badge
 - `defer tx.Rollback()` must be wrapped: `defer func() { _ = tx.Rollback() }()`
 - Dockerfile copies ALL source before `go mod tidy` (needs source to resolve dependencies)
 - Config reads `WEBAUTHN_RP_ID` and `WEBAUTHN_RP_ORIGINS` (not RPID/ORIGIN)
+- CSS `backdrop-filter` creates a containing block — breaks `position: fixed` on children. Use `position: absolute` instead
+- CSS container queries can't self-reference — an element can't be its own container context. Use `@media` queries for layout
+- Go has no pure-Go WebP encoder (no CGO in scratch Docker) — do image processing client-side with Canvas API
+- Avatar upload: client resizes to 256px + encodes WebP via `canvas.toBlob('image/webp', 0.85)`, server just validates and saves
+- `COOKIE_DOMAIN=.stackrigs.com` (leading dot) needed for cross-subdomain cookie sharing
+- `FRONTEND_URL` is separate from `BASE_URL` — frontend redirects (post-auth) use FRONTEND_URL
 
 ## Philosophy — What StackRigs is NOT
 
@@ -158,7 +171,7 @@ GET    /badge/:handle/:buildId.svg    # Build-specific badge
 
 - **Go:** slog for logging, chi middleware pattern, raw SQL (no ORM), nanoid for IDs
 - **CSS:** No Tailwind. CSS custom properties + @layer + container queries. No vendor prefixes unless absolutely required.
-- **JS:** Minimal. Only 2 Preact islands. Everything else is static HTML from Astro.
+- **JS:** Minimal. Preact islands for interactivity. Everything else is static HTML from Astro.
 - **HTML:** Semantic HTML5 with ARIA where needed. Native `<dialog>` for modals. Native `<details>` for expandable sections.
 - **Naming:** Go files use snake_case. Frontend uses PascalCase for components, camelCase for utils.
 - **Commits:** Include `Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>` when AI-assisted.
@@ -193,36 +206,102 @@ See `.env.example` for the full list. Critical ones:
 | `DEPLOY_SSH_KEY` | SSH private key | When backend ready |
 | `DEPLOY_SSH_PORT` | SSH port (default: 22) | Optional |
 
-## Next Steps (Pending)
+## Master Plan (audited 2026-04-22)
 
-### Infrastructure (Pi 5 / VPS)
-- [ ] Install Docker + Docker Compose on Pi 5
-- [ ] Set up Cloudflare Tunnel (`cloudflared`) to expose Go API on stackrigs.com
-- [ ] Configure DNS in Cloudflare: stackrigs.com → Tunnel (API), Pages (frontend)
-- [ ] Add GitHub secrets: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`
-- [ ] Create `/opt/stackrigs` deploy directory with `docker-compose.yml` and `.env`
-- [ ] First deploy: pull image from GHCR, run `docker compose up -d`
-- [ ] Verify health check at `http://localhost:8080/health`
+Priorizado por impacto. Trabajar en orden de fase.
 
-### Frontend Polish
-- [ ] Verify Cloudflare Pages project was auto-created (check deploy logs)
-- [ ] Connect custom domain stackrigs.com to Cloudflare Pages
-- [ ] Test all pages render correctly (index, explore, search, infra, about)
-- [ ] Test Spanish routes (/es/*)
-- [ ] Review and polish CSS / Editorial Zen design in browser
+### Fase 1 — Seguridad y bugs críticos (antes de usuarios reales)
+- [ ] **C1** — Mutex en mapas WebAuthn (race condition → panic fatal) `internal/handler/auth.go:64-65`
+- [ ] **C2** — CORS permite localhost en prod si `ALLOWED_ORIGINS` no está seteado `internal/middleware/cors.go`
+- [ ] **C8** — Filtros multi-tech rotos (envía `go,react` como slug literal) `frontend/src/islands/ExploreIsland.tsx:51`
+- [ ] **C11** — SSE se corta a 30s por `WriteTimeout` del server `cmd/server/main.go:190`
+- [ ] **M15** — FTS no se actualiza en builds nuevos (solo al arrancar) `internal/store/build.go`
+- [ ] **C9** — Token GitHub guardado en texto plano `internal/database/db.go:150`
+- [ ] **A1** — Rate limiter bypaseable con `X-Forwarded-For` falso `internal/middleware/ratelimit.go:120`
 
-### Backend Validation
-- [ ] Install Go locally or use Docker to run `go mod tidy` and commit a real `go.sum`
-- [ ] Commit `frontend/package-lock.json` for deterministic CI builds (`npm ci`)
-- [ ] Run the server locally and test all API endpoints
-- [ ] Test Passkey registration/login flow
-- [ ] Test GitHub OAuth flow (needs GitHub OAuth App created)
-- [ ] Verify SQLite migrations run correctly on first startup
+### Fase 2 — UX bloqueantes (signup muerto, errores, i18n)
+- [ ] Arreglar loop muerto de signup (no hay flujo de registro visible) `frontend/src/pages/signin.astro`
+- [ ] Reemplazar `alert()` con errores inline en signin `frontend/src/pages/signin.astro:72,101,105`
+- [ ] Arreglar acentos en español `frontend/src/i18n/es.json`
+- [ ] Arreglar doble mount de `AuthIsland` en Nav (2x fetch `/api/auth/me`) `frontend/src/components/Nav.astro:38,67`
 
-### Production Hardening
-- [ ] Create GitHub OAuth App (Settings → Developer → OAuth Apps) for stackrigs.com
-- [ ] Generate `SESSION_SECRET` (32-byte random)
-- [ ] Set up R2 bucket for backups + configure `scripts/backup.sh`
-- [ ] Configure cron for hourly backups (`crontab.example`)
-- [ ] Set up monitoring/alerts (uptime check on /health)
-- [ ] Review Trivy scan results and fix any vulnerabilities
+### Fase 3 — Identidad del producto
+- [ ] Hero: mover "Show your build, not your brand" al primer plano `frontend/src/pages/index.astro`
+- [ ] Reordenar `/build/[id]`: snapshot → timeline → embed `frontend/src/pages/build/[id].astro`
+- [ ] Activar dark mode (tokens ya listos, falta 1 media query) `frontend/src/styles/tokens.css`
+- [ ] Popular Stacks: jerarquía visual por conteo `frontend/src/pages/index.astro:42`
+- [ ] Onboarding post-login + empty states con CTAs de owner
+
+### Fase 4 — Cover image (backend listo, frontend falta)
+- [ ] `UploadCover` handler + ruta `POST /api/upload/cover` `internal/handler/upload.go`
+- [ ] Tipos `coverImage` en `BuildCardData`/`BuildDetailData` + i18n `frontend/src/lib/api.ts`
+- [ ] File input + WebP resize en `BuildFormIsland.tsx`
+- [ ] Render en `BuildLog.astro` (hero banner) y `BuildCard.astro` (thumbnail)
+
+### Fase 5 — Descubrimiento y formularios
+- [ ] Technologies: autocomplete con chips en `BuildFormIsland.tsx:243`
+- [ ] Explore: skeleton loading, clear filters, conteo de resultados `ExploreIsland.tsx`
+- [ ] Arreglar páginas `/stack/[slug]` (datos mock → API real)
+- [ ] Infra como filtro en Explore (hosting/db/cdn)
+
+### Fase 6 — Performance y polish
+- [ ] N+1 queries en `BuildStore.List` `internal/store/build.go:83`
+- [ ] `getStaticPaths` superar límite de 100 páginas `frontend/src/lib/api.ts:214`
+- [ ] `FreshnessDot`: calcular en cliente, no en build-time `frontend/src/components/FreshnessDot.astro`
+- [ ] Hover cards: suavizar animación (anti-feed brand) `frontend/src/styles/global.css:272`
+
+### Fase 7 — Infra y features finales
+- [ ] Dashboard "My Builds" para el builder autenticado
+- [ ] Configurar GitHub Secrets para CI auto-deploy (`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`)
+- [ ] "Last change" changelog en landing (anti-feed, 1 línea)
+
+---
+
+## Audit Status (as of 2026-03-08)
+
+### Fully Working (end-to-end)
+- [x] Auth flow: GitHub OAuth + Passkeys (WebAuthn)
+- [x] Profile edit: display_name, bio, website, twitter_url, avatar upload
+- [x] Profile page: renders all builder links (github, twitter, website)
+- [x] Build CRUD: create, read, update, delete
+- [x] Build updates/milestones: create, read, delete (timeline UI)
+- [x] FTS5 search
+- [x] Badge SVG generation
+- [x] SSE real-time infra metrics with polling fallback
+- [x] Uptime history tracking
+- [x] i18n EN/ES
+- [x] 404 page
+
+### Cover Image — Half-Implemented
+- [x] **Backend ready:** DB column `cover_image` exists, model fields defined, store Create/Update handle it, handler accepts it
+- [ ] **Frontend missing:** BuildFormIsland has no file input for cover image
+- [ ] **Frontend missing:** BuildCard.astro does not render cover_image
+- [ ] **Frontend missing:** BuildLog.astro does not render cover_image
+- [ ] **Frontend missing:** `BuildCardData` / `BuildDetailData` types in api.ts don't include coverImage
+- [ ] **Frontend missing:** `toBuildCard()` / `toBuildDetail()` transforms don't map cover_image
+- [ ] **Backend missing:** No `/api/upload/cover` endpoint (need similar to avatar upload but for builds)
+
+### Implementation Plan for Cover Image
+1. Add `UploadCover` handler in `upload.go` (like avatar but saves to `uploads/covers/`, max 2MB, 1200px wide)
+2. Add route `POST /api/upload/cover` in `main.go`
+3. Add `coverImage` field to `BuildCardData` and `BuildDetailData` in `api.ts`
+4. Add `cover_image` mapping in `toBuildCard()` and `toBuildDetail()`
+5. Add file input + client-side WebP resize in `BuildFormIsland.tsx`
+6. Render cover image in `BuildLog.astro` (hero banner) and `BuildCard.astro` (thumbnail)
+7. Add i18n labels: `buildForm.coverImage`, `buildForm.changeCover`
+
+### Infrastructure
+- [x] Docker + Docker Compose on Pi 5
+- [x] Cloudflare Tunnel exposing API
+- [x] DNS configured: stackrigs.com → Tunnel (API), Pages (frontend)
+- [x] Health check working: https://stackrigs.com/health
+- [ ] Add GitHub secrets for CI auto-deploy: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`
+
+### Remaining Tasks
+- [ ] **Cover image upload** — see plan above (highest priority)
+- [ ] **Dashboard "My Builds"** — no page listing current user's builds
+- [ ] **Invitation codes management** — no API/UI to create/list codes
+- [ ] **GitHub OAuth App setup** — needs OAuth App in GitHub Settings
+- [ ] **R2 bucket for backups** — script exists, bucket not created
+- [ ] **Build #1 content update** — `scripts/update-build-1.sh` ready to run after deploy
+- [ ] **Playwright end-to-end audit** — test all flows in live browser
