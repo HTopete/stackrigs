@@ -215,15 +215,31 @@ export async function getTechnologies(): Promise<TechData[]> {
 }
 
 export async function getAllBuilderHandles(): Promise<string[]> {
-  // Fetch a large page of builds to extract unique handles for static paths
-  const data = await apiFetch<APIPaginatedResponse<APIBuild>>('/api/builds?limit=100');
-  if (!data) return [];
-  const handles = new Set(data.data.map(b => b.builder?.handle).filter(Boolean) as string[]);
+  const handles = new Set<string>();
+  let offset = 0;
+  const limit = 100;
+  while (true) {
+    const data = await apiFetch<APIPaginatedResponse<APIBuild>>(`/api/builds?limit=${limit}&offset=${offset}`);
+    if (!data || data.data.length === 0) break;
+    for (const b of data.data) {
+      if (b.builder?.handle) handles.add(b.builder.handle);
+    }
+    if (!data.has_more) break;
+    offset += limit;
+  }
   return [...handles];
 }
 
 export async function getAllBuildIds(): Promise<string[]> {
-  const data = await apiFetch<APIPaginatedResponse<APIBuild>>('/api/builds?limit=100');
-  if (!data) return [];
-  return data.data.map(b => String(b.id));
+  const ids: string[] = [];
+  let offset = 0;
+  const limit = 100;
+  while (true) {
+    const data = await apiFetch<APIPaginatedResponse<APIBuild>>(`/api/builds?limit=${limit}&offset=${offset}`);
+    if (!data || data.data.length === 0) break;
+    ids.push(...data.data.map(b => String(b.id)));
+    if (!data.has_more) break;
+    offset += limit;
+  }
+  return ids;
 }

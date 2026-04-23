@@ -9,36 +9,57 @@ const { lastUpdated } = Astro.props;
 const locale = detectLocaleFromPath(Astro.url.pathname);
 const t = useTranslations(locale);
 
-const now = new Date();
-const updated = new Date(lastUpdated);
-const diffMs = now.getTime() - updated.getTime();
-const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-let freshnessClass: string;
-let freshnessLabel: string;
-
-if (diffDays < 30) {
-  freshnessClass = 'freshness-active';
-  freshnessLabel = t('freshness.active');
-} else if (diffDays < 90) {
-  freshnessClass = 'freshness-semi-active';
-  freshnessLabel = t('freshness.semiActive');
-} else {
-  freshnessClass = 'freshness-archived';
-  freshnessLabel = t('freshness.archived');
-}
-
-const tooltipText = `${t('common.updated')} ${diffDays} ${diffDays === 1 ? t('common.dayAgo') : t('common.daysAgo')}`;
+// Labels for client-side script (avoids hydration mismatch)
+const labels = {
+  active: t('freshness.active'),
+  semiActive: t('freshness.semiActive'),
+  archived: t('freshness.archived'),
+  updated: t('common.updated'),
+  dayAgo: t('common.dayAgo'),
+  daysAgo: t('common.daysAgo'),
+};
 ---
 
 <span
   class="freshness-indicator"
-  title={tooltipText}
-  aria-label={`${freshnessLabel}: ${tooltipText}`}
+  data-last-updated={lastUpdated}
+  data-labels={JSON.stringify(labels)}
 >
-  <span class={`freshness-dot ${freshnessClass}`} aria-hidden="true"></span>
-  <span class="freshness-label">{freshnessLabel}</span>
+  <span class="freshness-dot freshness-unknown" aria-hidden="true"></span>
+  <span class="freshness-label font-mono"></span>
 </span>
+
+<script>
+  function initFreshness(el: HTMLElement) {
+    const raw = el.dataset.lastUpdated;
+    const labels = JSON.parse(el.dataset.labels || '{}');
+    if (!raw) return;
+
+    const diffDays = Math.floor((Date.now() - new Date(raw).getTime()) / 86_400_000);
+    const dot = el.querySelector('.freshness-dot') as HTMLElement;
+    const label = el.querySelector('.freshness-label') as HTMLElement;
+
+    let cls: string;
+    let text: string;
+    if (diffDays < 30) {
+      cls = 'freshness-active'; text = labels.active;
+    } else if (diffDays < 90) {
+      cls = 'freshness-semi-active'; text = labels.semiActive;
+    } else {
+      cls = 'freshness-archived'; text = labels.archived;
+    }
+
+    dot.className = `freshness-dot ${cls}`;
+    label.textContent = text;
+    const ago = `${labels.updated} ${diffDays} ${diffDays === 1 ? labels.dayAgo : labels.daysAgo}`;
+    el.setAttribute('title', ago);
+    el.setAttribute('aria-label', `${text}: ${ago}`);
+  }
+
+  document.addEventListener('astro:page-load', () => {
+    document.querySelectorAll<HTMLElement>('.freshness-indicator[data-last-updated]').forEach(initFreshness);
+  });
+</script>
 
 <style>
   .freshness-indicator {
@@ -52,5 +73,10 @@ const tooltipText = `${t('common.updated')} ${diffDays} ${diffDays === 1 ? t('co
 
   .freshness-label {
     font-family: var(--font-mono);
+  }
+
+  /* Unknown state before JS runs — invisible dot, no label */
+  .freshness-unknown {
+    opacity: 0;
   }
 </style>

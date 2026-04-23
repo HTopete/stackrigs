@@ -270,20 +270,32 @@
   }
 
   .card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-hover);
+    /* Editorial hover: underline the title link, not a bounce */
+    box-shadow: var(--shadow-card), 0 0 0 1px var(--color-border);
+  }
+
+  .card:hover .build-card-link,
+  .card:hover h3 a {
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 
   .card:active {
-    transform: translateY(0);
     transition-duration: var(--duration-instant);
   }
 
-  /* Card with freshness-active child gets subtle left accent */
+  /* Card with freshness-active child: left accent + preserve on hover */
   .card:has(.freshness-active) {
     box-shadow:
       inset 3px 0 0 var(--color-accent),
       var(--shadow-card);
+  }
+
+  .card:has(.freshness-active):hover {
+    box-shadow:
+      inset 3px 0 0 var(--color-accent),
+      var(--shadow-card),
+      0 0 0 1px var(--color-border);
   }
 
   /* Container query: compact layout on small containers */
@@ -454,7 +466,13 @@
 
   .freshness-active {
     background-color: var(--color-accent);
-    animation: pulse 2s var(--ease-in-out) infinite;
+    /* Pulse only on the FIRST active card in a list — avoids rainbow distraction */
+    animation: none;
+  }
+
+  .grid-cards .card:has(.freshness-active):first-child .freshness-active,
+  .card:has(.freshness-active):only-child .freshness-active {
+    animation: pulse 3s var(--ease-in-out) infinite;
   }
 
   .freshness-semi-active {
