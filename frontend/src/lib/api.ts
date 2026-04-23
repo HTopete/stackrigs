@@ -106,6 +106,7 @@ export interface TechData {
   slug: string;
   displayName: string;
   count: number;
+  category?: string;
 }
 
 // --- Transform helpers ---
@@ -210,7 +211,7 @@ export async function getBuilder(handle: string): Promise<BuilderData | null> {
 export async function getTechnologies(): Promise<TechData[]> {
   const data = await apiFetch<APITechnology[]>('/api/technologies');
   if (!data) return [];
-  return data.map(t => ({ slug: t.slug, displayName: t.name, count: t.build_count || 0 }));
+  return data.map(t => ({ slug: t.slug, displayName: t.name, count: t.build_count || 0, category: t.category || '' }));
 }
 
 export async function getAllBuilderHandles(): Promise<string[]> {

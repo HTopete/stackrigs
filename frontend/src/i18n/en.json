@@ -103,6 +103,8 @@
     "piNote": "Running on a Raspberry Pi 5"
   },
   "explore": {
+    "results": "builds",
+    "clearFilters": "Clear filters",
     "title": "Explore Builds",
     "filterBy": "Filter by",
     "technology": "Technology",

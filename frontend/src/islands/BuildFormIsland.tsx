@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useRef } from 'preact/hooks';
 import type { FunctionComponent } from 'preact';
 import { API_BASE } from '../lib/api';
 
@@ -91,13 +91,25 @@ async function resizeToWebP(file: File, maxWidth = 1200): Promise<Blob> {
 
 const BuildFormIsland: FunctionComponent<Props> = ({ mode, buildId, locale, labels, statusLabels }) => {
   const [form, setForm] = useState<BuildData>(emptyForm);
-  const [techInput, setTechInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [coverFile, setCoverFile] = useState<Blob | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [allTechs, setAllTechs] = useState<Array<{ slug: string; displayName: string }>>([]);
+  const [techQuery, setTechQuery] = useState('');
+  const [techDropdownOpen, setTechDropdownOpen] = useState(false);
+  const techInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/technologies`)
+      .then(r => r.ok ? r.json() : [])
+      .then((data: any[]) => setAllTechs(
+        data.map(t => ({ slug: t.slug, displayName: t.name || t.slug }))
+      ))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' })
@@ -121,7 +133,6 @@ const BuildFormIsland: FunctionComponent<Props> = ({ mode, buildId, locale, labe
                   what_id_change: data.what_id_change || '',
                   technologies: (data.technologies || []).map((t: any) => t.slug),
                 });
-                setTechInput((data.technologies || []).map((t: any) => t.slug).join(', '));
               }
             });
         }
@@ -145,11 +156,25 @@ const BuildFormIsland: FunctionComponent<Props> = ({ mode, buildId, locale, labe
     setForm(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleTechChange = (value: string) => {
-    setTechInput(value);
-    const techs = value.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-    setForm(prev => ({ ...prev, technologies: techs }));
+  const addTech = (slug: string) => {
+    const normalized = slug.trim().toLowerCase();
+    if (!normalized || form.technologies.includes(normalized)) return;
+    setForm(prev => ({ ...prev, technologies: [...prev.technologies, normalized] }));
+    setTechQuery('');
+    setTechDropdownOpen(false);
+    techInputRef.current?.focus();
   };
+
+  const removeTech = (slug: string) => {
+    setForm(prev => ({ ...prev, technologies: prev.technologies.filter(t => t !== slug) }));
+  };
+
+  const techSuggestions = techQuery.length > 0
+    ? allTechs.filter(t =>
+        (t.slug.includes(techQuery.toLowerCase()) || t.displayName.toLowerCase().includes(techQuery.toLowerCase())) &&
+        !form.technologies.includes(t.slug)
+      ).slice(0, 8)
+    : [];
 
   const handleCoverChange = async (e: Event) => {
     const file = (e.target as HTMLInputElement).files?.[0];
@@ -308,14 +333,64 @@ const BuildFormIsland: FunctionComponent<Props> = ({ mode, buildId, locale, labe
         </div>
 
         <div class="build-form-field">
-          <label for="bf-tech">{labels.technologies}</label>
-          <input
-            id="bf-tech"
-            type="text"
-            value={techInput}
-            onInput={(e) => handleTechChange((e.target as HTMLInputElement).value)}
-            placeholder={labels.technologiesPlaceholder}
-          />
+          <label>{labels.technologies}</label>
+          {/* Selected tech chips */}
+          {form.technologies.length > 0 && (
+            <div class="tech-chips">
+              {form.technologies.map(slug => {
+                const match = allTechs.find(t => t.slug === slug);
+                return (
+                  <span class="tech-chip" key={slug}>
+                    {match?.displayName || slug}
+                    <button
+                      type="button"
+                      class="tech-chip-remove"
+                      onClick={() => removeTech(slug)}
+                      aria-label={`Remove ${slug}`}
+                    >×</button>
+                  </span>
+                );
+              })}
+            </div>
+          )}
+          {/* Autocomplete input */}
+          <div class="tech-autocomplete">
+            <input
+              ref={techInputRef}
+              type="text"
+              value={techQuery}
+              onInput={(e) => {
+                setTechQuery((e.target as HTMLInputElement).value);
+                setTechDropdownOpen(true);
+              }}
+              onFocus={() => setTechDropdownOpen(true)}
+              onBlur={() => setTimeout(() => setTechDropdownOpen(false), 150)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && techQuery.trim()) {
+                  e.preventDefault();
+                  const exact = allTechs.find(t => t.slug === techQuery.trim().toLowerCase());
+                  addTech(exact ? exact.slug : techQuery.trim());
+                }
+              }}
+              placeholder={labels.technologiesPlaceholder}
+              autocomplete="off"
+            />
+            {techDropdownOpen && techSuggestions.length > 0 && (
+              <ul class="tech-dropdown" role="listbox">
+                {techSuggestions.map(t => (
+                  <li
+                    key={t.slug}
+                    class="tech-dropdown-item"
+                    role="option"
+                    onMouseDown={() => addTech(t.slug)}
+                  >
+                    <span class="tech-dropdown-name">{t.displayName}</span>
+                    <span class="tech-dropdown-slug font-mono">{t.slug}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           <span class="build-form-hint">{labels.technologiesHint}</span>
         </div>
       </div>
