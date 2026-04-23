@@ -35,6 +35,17 @@
     "memberSince": "Member since",
     "lastActive": "Last active"
   },
+  "myBuilds": {
+    "title": "My Builds",
+    "newBuild": "New Build",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this build? This cannot be undone.",
+    "noBuilds": "You haven't shared a build yet.",
+    "startCta": "Start your first build log →",
+    "loginRequired": "Sign in to see your builds.",
+    "lastUpdated": "Updated"
+  },
   "updates": {
     "stackChange": "Stack Change",
     "infraChange": "Infra Change",

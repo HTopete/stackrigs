@@ -35,6 +35,17 @@
     "memberSince": "Miembro desde",
     "lastActive": "Última actividad"
   },
+  "myBuilds": {
+    "title": "Mis Builds",
+    "newBuild": "Nuevo Build",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "deleteConfirm": "¿Eliminar este build? Esta acción no se puede deshacer.",
+    "noBuilds": "Aún no has compartido un build.",
+    "startCta": "Crea tu primer build log →",
+    "loginRequired": "Inicia sesión para ver tus builds.",
+    "lastUpdated": "Actualizado"
+  },
   "updates": {
     "stackChange": "Cambio de Stack",
     "infraChange": "Cambio de Infra",
